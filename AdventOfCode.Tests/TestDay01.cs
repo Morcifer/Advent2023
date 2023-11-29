@@ -1,5 +1,3 @@
-using AoCHelper;
-
 namespace AdventOfCode.Tests
 {
     public class TestDay01
@@ -25,11 +23,11 @@ namespace AdventOfCode.Tests
         }
 
         [Theory]
-        [InlineData(typeof(Day01), true, "34241", "51316")]
-        [InlineData(typeof(Day01), false, "3394032", "5088176")]
-        public async Task Day1_Test(Type type, bool isTest, string expectedPart1, string expectedPart2)
+        [InlineData(typeof(Day01), RunMode.Test, "34241", "51316")]
+        [InlineData(typeof(Day01), RunMode.Real, "3394032", "5088176")]
+        public async Task Day1_Test(Type type, RunMode runMode, string expectedPart1, string expectedPart2)
         {
-            if (Activator.CreateInstance(type, new object[] { isTest } ) is BaseTestableDay instance)
+            if (Activator.CreateInstance(type, runMode) is BaseTestableDay instance)
             {
                 (await instance.Solve_1()).Should().Be(expectedPart1);
                 (await instance.Solve_2()).Should().Be(expectedPart2);

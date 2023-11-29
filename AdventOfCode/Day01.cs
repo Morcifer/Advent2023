@@ -7,13 +7,13 @@ namespace AdventOfCode
     {
         private readonly List<int> _input;
 
-        public Day01() : this(false)
+        public Day01() : this(RunMode.Real)
         {
         }
 
-        public Day01(bool isTest)
+        public Day01(RunMode runMode)
         {
-            IsTest = isTest;
+            RunMode = runMode;
 
             _input = File
                 .ReadAllLines(InputFilePath)

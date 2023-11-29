@@ -1,9 +1,21 @@
 ﻿namespace AdventOfCode
 {
+    public enum RunMode
+    {
+        Test,
+        Real,
+    }
+
     public abstract class BaseTestableDay: BaseDay
     {
-        internal bool IsTest { get; set; }
+        internal RunMode RunMode { get; set; }
 
-        protected override string InputFileExtension => IsTest ? "test.txt": base.InputFileExtension;
+        protected override string InputFileExtension =>
+            RunMode switch
+            {
+                RunMode.Test => "test.txt",
+                RunMode.Real => ".txt",
+                _ => throw new ArgumentException("Invalid enum value for RunMode", nameof(RunMode)),
+            };
     }
 }
