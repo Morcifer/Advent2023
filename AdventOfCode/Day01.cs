@@ -3,7 +3,7 @@
 [assembly: InternalsVisibleTo("AdventOfCode.Tests")]
 namespace AdventOfCode
 {
-    public class Day01 : BaseTestableDay
+    public sealed class Day01 : BaseTestableDay
     {
         private readonly List<int> _input;
 
