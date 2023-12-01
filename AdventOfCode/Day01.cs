@@ -30,7 +30,7 @@ namespace AdventOfCode
             return firstDigit * 10 + lastDigit;
         }
 
-        private int CalculateDigitCalibrationValue()
+        private Answer CalculateDigitCalibrationValue()
         {
             return _input.Select(CalculateSingleDigitCalibrationValue).Sum();
         }
@@ -92,13 +92,13 @@ namespace AdventOfCode
             return firstDigit * 10 + lastDigit;
         }
 
-        private int CalculateLiteralCalibrationValue()
+        private Answer CalculateLiteralCalibrationValue()
         {
             return _input.Select(CalculateSingleLiteralCalibrationValue).Sum();
         }
 
-        public override ValueTask<string> Solve_1() => new($"{CalculateDigitCalibrationValue()}");
+        public override ValueTask<string> Solve_1() => new(CalculateDigitCalibrationValue());
 
-        public override ValueTask<string> Solve_2() => new($"{CalculateLiteralCalibrationValue()}");
+        public override ValueTask<string> Solve_2() => new(CalculateLiteralCalibrationValue());
     }
 }
