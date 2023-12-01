@@ -25,10 +25,10 @@ namespace AdventOfCode
         {
             var letters = text.ToCharArray();
 
-            var first_digit = letters.First(c => char.IsDigit(c)) - '0';
-            var last_digit = letters.Last(c => char.IsDigit(c)) - '0';
+            var firstDigit = letters.FirstOrDefault(char.IsDigit, '0') - '0';
+            var lastDigit = letters.LastOrDefault(char.IsDigit, '0') - '0';
 
-            return first_digit * 10 + last_digit;
+            return firstDigit * 10 + lastDigit;
         }
 
         private int CalculateDigitCalibrationValue()
@@ -96,22 +96,7 @@ namespace AdventOfCode
 
         private int CalculateLiteralCalibrationValue()
         {
-            var input = _input;
-            if (RunMode == RunMode.Test)
-            {
-                input = new List<string>
-                {
-                    "two1nine",
-                    "eightwothree",
-                    "abcone2threexyz",
-                    "xtwone3four",
-                    "4nineeightseven2",
-                    "zoneight234",
-                    "7pqrstsixteen",
-                };
-            }
-
-            return input.Select(CalculateSingleLiteralCalibrationValue).Sum();
+            return _input.Select(CalculateSingleLiteralCalibrationValue).Sum();
         }
 
         public override ValueTask<string> Solve_1() => new($"{CalculateDigitCalibrationValue()}");

@@ -26,7 +26,7 @@ namespace AdventOfCode.Tests
         }
 
         [Theory]
-        [InlineData(typeof(Day01), RunMode.Test, "142", "281")]
+        [InlineData(typeof(Day01), RunMode.Test, "351", "423")]
         [InlineData(typeof(Day01), RunMode.Real, "54968", "54094")]
         public async Task Day1_Regression(Type type, RunMode runMode, string expectedPart1, string expectedPart2)
         {
