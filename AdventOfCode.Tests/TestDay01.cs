@@ -2,25 +2,28 @@ namespace AdventOfCode.Tests
 {
     public class TestDay01
     {
-        //[Theory]
-        //[InlineData(12, 2)]
-        //[InlineData(14, 2)]
-        //[InlineData(1969, 654)]
-        //[InlineData(100756, 33583)]
-        //public void Day1_Part1_SingleRowCalculation(int mass, int expectedFuel)
-        //{
-        //    Day01.CalculateSingleFuel(mass).Should().Be(expectedFuel);
-        //}
+        [Theory]
+        [InlineData("1abc2", 12)]
+        [InlineData("pqr3stu8vwx", 38)]
+        [InlineData("a1b2c3d4e5f", 15)]
+        [InlineData("treb7uchet", 77)]
+        public void Day1_Part1_SingleRowCalculation(string text, int expected)
+        {
+            Day01.CalculateSingleDigitCalibrationValue(text).Should().Be(expected);
+        }
 
-        //[Theory]
-        //[InlineData(12, 2)]
-        //[InlineData(14, 2)]
-        //[InlineData(1969, 966)]
-        //[InlineData(100756, 50346)]
-        //public void Day1_Part2_SingleRowCalculation(int mass, int expectedFuel)
-        //{
-        //    Day01.CalculateSingleCompoundFuel(mass).Should().Be(expectedFuel);
-        //}
+        [Theory]
+        [InlineData("two1nine", 29)]
+        [InlineData("eightwothree", 83)]
+        [InlineData("abcone2threexyz", 13)]
+        [InlineData("xtwone3four", 24)]
+        [InlineData("4nineeightseven2", 42)]
+        [InlineData("zoneight234", 14)]
+        [InlineData("7pqrstsixteen", 76)]
+        public void Day1_Part2_SingleRowCalculation(string text, int expected)
+        {
+            Day01.CalculateSingleLiteralCalibrationValue(text).Should().Be(expected);
+        }
 
         [Theory]
         [InlineData(typeof(Day01), RunMode.Test, "142", "281")]
