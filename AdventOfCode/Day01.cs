@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AdventOfCode.Tests")]
 namespace AdventOfCode
@@ -36,41 +35,6 @@ namespace AdventOfCode
             return _input.Select(CalculateSingleDigitCalibrationValue).Sum();
         }
 
-        //internal static int CalculateSingleLiteralCalibrationValue(string text)
-        //{
-        //    var literals = new Dictionary<string, string> ()
-        //    {
-        //        { "one", "1" },
-        //        { "two", "2" },
-        //        { "three", "3" },
-        //        { "four", "4"},
-        //        { "five", "5" },
-        //        { "six", "6"},
-        //        { "seven", "7" },
-        //        { "eight", "8" },
-        //        { "nine", "9" }
-        //    };
-
-        //    var locations_of_numbers = literals
-        //        .SelectMany(kvp => new[]
-        //        {
-        //            (text.IndexOf(kvp.Key), kvp.Key),
-        //            (text.IndexOf(kvp.Value), kvp.Value)
-        //        })
-        //        .Where(x => x.Item1 != -1)
-        //    .ToList();
-
-        //    var first = locations_of_numbers.MinBy(x => x.Item1).Item2;
-        //    var last = locations_of_numbers.MaxBy(x => x.Item1).Item2;
-
-        //    var first_digit = (literals.ContainsKey(first) ? literals[first] : first)[0] - '0';
-        //    var last_digit = (literals.ContainsKey(last) ? literals[last] : last)[0] - '0';
-
-        //    Console.WriteLine($"{text}: {first_digit} -> {last_digit}");
-
-        //    return first_digit * 10 + last_digit;
-        //}
-
         internal static int CalculateSingleLiteralCalibrationValue(string text)
         {
             var literals = new Dictionary<string, string>()
@@ -92,6 +56,40 @@ namespace AdventOfCode
             }
 
             return CalculateSingleDigitCalibrationValue(text);
+        }
+
+        internal static int CalculateSingleLiteralCalibrationValueExplicit(string text)
+        {
+            var literals = new Dictionary<string, string>()
+            {
+                { "one", "1" },
+                { "two", "2" },
+                { "three", "3" },
+                { "four", "4"},
+                { "five", "5" },
+                { "six", "6"},
+                { "seven", "7" },
+                { "eight", "8" },
+                { "nine", "9" }
+            };
+
+            var digitMatches = literals
+                .SelectMany(kvp => text.AllIndexesOf(kvp.Value).Select(index => (index, number: kvp.Value)))
+                .ToList();
+
+            var literalMatches = literals
+                .SelectMany(kvp => text.AllIndexesOf(kvp.Key).Select(index => (index, number: kvp.Key)))
+                .ToList();
+
+            var matches = digitMatches.Concat(literalMatches).Where(x => x.index != -1).ToList();
+
+            var first = matches.MinBy(x => x.index).number;
+            var last = matches.MaxBy(x => x.index).number;
+
+            var firstDigit = (literals.TryGetValue(first, out var firstLiteral) ? firstLiteral : first)[0] - '0';
+            var lastDigit = (literals.TryGetValue(last, out var lastLiteral) ? lastLiteral : last)[0] - '0';
+
+            return firstDigit * 10 + lastDigit;
         }
 
         private int CalculateLiteralCalibrationValue()

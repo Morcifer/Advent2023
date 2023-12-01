@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AdventOfCode.Tests
 {
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class TestDay01
     {
         [Theory]
@@ -20,9 +23,11 @@ namespace AdventOfCode.Tests
         [InlineData("4nineeightseven2", 42)]
         [InlineData("zoneight234", 14)]
         [InlineData("7pqrstsixteen", 76)]
+        [InlineData("eightnineseventwo1seven", 87)]
         public void Day1_Part2_SingleRowCalculation(string text, int expected)
         {
             Day01.CalculateSingleLiteralCalibrationValue(text).Should().Be(expected);
+            Day01.CalculateSingleLiteralCalibrationValueExplicit(text).Should().Be(expected);
         }
 
         [Theory]
