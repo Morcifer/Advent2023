@@ -1,22 +1,48 @@
 ﻿using System.Runtime.CompilerServices;
 
-
 [assembly: InternalsVisibleTo("AdventOfCode.Tests")]
 namespace AdventOfCode
 {
-    public enum OpCode
-    {
-        Add = 1,
-        Multiply = 2,
-        Terminate = 99,
-    }
-
     public sealed class Day02 : BaseTestableDay
     {
-        private readonly List<int> _input;
+        private readonly List<(int, List<Dictionary<string, int>>)> _input;
 
         public Day02() : this(RunMode.Real)
         {
+        }
+
+        private (int, List<Dictionary<string, int>>) ConvertTextToGame(string text)
+        {
+            // text = Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            var splitByColon = text.Split(':').Select(s => s.Trim()).ToList();
+            var gameId = int.Parse(splitByColon[0][5..]);
+
+            // sessions = 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            var sessions = splitByColon[1]
+                .Split(';')
+                .Select(s => s.Trim())
+                .ToList();
+
+            var result = new List<Dictionary<string, int>>();
+
+            foreach (var session in sessions)
+            {
+                var temp = session // 3 blue, 4 red
+                    .Split(',')
+                    .Select(s => s.Trim())
+                    .Select(s => s.Split(' ').ToList())
+                    .ToList();
+
+                var cubes = session // 3 blue, 4 red
+                    .Split(',')
+                    .Select(s => s.Trim())
+                    .Select(s => s.Split(' ')) // 3 blue => [3, blue]
+                    .ToDictionary(x => x[1], x => int.Parse(x[0]));
+
+                result.Add(cubes);
+            }
+
+            return (gameId, result);
         }
 
         public Day02(RunMode runMode)
@@ -25,95 +51,56 @@ namespace AdventOfCode
 
             _input = File
                 .ReadAllLines(InputFilePath)
-                .First()
-                .Split(',')
-                .Select(int.Parse)
+                .Select(ConvertTextToGame)
                 .ToList();
         }
 
-        private int RunProgram(List<int> program)
+        internal static bool IsGamePossible((int, List<Dictionary<string, int>>) game)
         {
-            var instructionPointer = 0;
+            // red, green, or blue
+            var maxRed = 0;
+            var maxGreen = 0;
+            var maxBlue = 0;
 
-            while (instructionPointer < program.Count)
+            foreach (var session in game.Item2)
             {
-                int parameter1, parameter2, parameter3;
-
-                switch ((OpCode)program[instructionPointer])
-                {
-                    case OpCode.Add:
-                        parameter1 = program[instructionPointer + 1];
-                        parameter2 = program[instructionPointer + 2];
-                        parameter3 = program[instructionPointer + 3];
-
-                        program[parameter3] = program[parameter1] + program[parameter2];
-                        instructionPointer += 4;
-
-                        break;
-                    case OpCode.Multiply:
-                        parameter1 = program[instructionPointer + 1];
-                        parameter2 = program[instructionPointer + 2];
-                        parameter3 = program[instructionPointer + 3];
-
-                        program[parameter3] = program[parameter1] * program[parameter2]; 
-                        instructionPointer += 4;
-
-                        break;
-                    case OpCode.Terminate:
-                        instructionPointer += 1;
-                        return program[0];
-                    default:
-                        throw new ArgumentException("Invalid value for OpCode", nameof(OpCode));
-                };
+                maxRed = Math.Max(maxRed, session.ContainsKey("red") ? session["red"] : 0);
+                maxGreen = Math.Max(maxGreen, session.ContainsKey("green") ? session["green"] : 0);
+                maxBlue = Math.Max(maxBlue, session.ContainsKey("blue") ? session["blue"] : 0);
             }
 
-            return -1;
+            return maxRed <= 12 && maxGreen <= 13 && maxBlue <= 14;
         }
 
-        private int Program1202()
+        private Answer CalculateNumberOfPossibleGames()
         {
-            var program = _input.ToList();
-            
-            if (RunMode == RunMode.Real)
+            return _input.Where(IsGamePossible).Sum(x => x.Item1);
+        }
+
+        internal static int MinimalCubeCountForGame((int, List<Dictionary<string, int>>) game)
+        {
+            // red, green, or blue
+            var maxRed = 0;
+            var maxGreen = 0;
+            var maxBlue = 0;
+
+            foreach (var session in game.Item2)
             {
-                program[1] = 12;
-                program[2] = 2;
+                maxRed = Math.Max(maxRed, session.ContainsKey("red") ? session["red"] : 0);
+                maxGreen = Math.Max(maxGreen, session.ContainsKey("green") ? session["green"] : 0);
+                maxBlue = Math.Max(maxBlue, session.ContainsKey("blue") ? session["blue"] : 0);
             }
 
-            return RunProgram(program);
+            return maxRed * maxGreen * maxBlue;
         }
 
-        private int FindNounAndVerb()
+        private Answer MinimalCubeCount()
         {
-            for (int noun = 0; noun < _input.Count; noun++)
-            {
-                for (int verb = 0; verb < _input.Count; verb++)
-                {
-                    var program = _input.ToList();
-
-                    program[1] = noun;
-                    program[2] = verb;
-
-                    try
-                    {
-                        var result = RunProgram(program);
-                        if (result == 19690720)
-                        {
-                            return 100 * noun + verb;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                    }
-                }
-            }
-
-            return -1;
+            return _input.Select(MinimalCubeCountForGame).Sum();
         }
 
+        public override ValueTask<string> Solve_1() => new(CalculateNumberOfPossibleGames());
 
-        public override ValueTask<string> Solve_1() => new($"{Program1202()}");
-
-        public override ValueTask<string> Solve_2() => new($"{FindNounAndVerb()}");
+        public override ValueTask<string> Solve_2() => new(MinimalCubeCount());
     }
 }
