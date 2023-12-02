@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Linq;
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AdventOfCode.Tests")]
 namespace AdventOfCode
@@ -27,12 +28,6 @@ namespace AdventOfCode
 
             foreach (var session in sessions)
             {
-                var temp = session // 3 blue, 4 red
-                    .Split(',')
-                    .Select(s => s.Trim())
-                    .Select(s => s.Split(' ').ToList())
-                    .ToList();
-
                 var cubes = session // 3 blue, 4 red
                     .Split(',')
                     .Select(s => s.Trim())
@@ -55,48 +50,30 @@ namespace AdventOfCode
                 .ToList();
         }
 
-        internal static bool IsGamePossible((int, List<Dictionary<string, int>>) game)
+        internal static (int, int, int) GetMaxRequired((int, List<Dictionary<string, int>>) game)
         {
-            // red, green, or blue
-            var maxRed = 0;
-            var maxGreen = 0;
-            var maxBlue = 0;
+            var maxRed = game.Item2.Select(session => session.GetValueOrDefault("red", 0)).Max();
+            var maxGreen = game.Item2.Select(session => session.GetValueOrDefault("green", 0)).Max();
+            var maxBlue = game.Item2.Select(session => session.GetValueOrDefault("blue", 0)).Max();
 
-            foreach (var session in game.Item2)
-            {
-                maxRed = Math.Max(maxRed, session.ContainsKey("red") ? session["red"] : 0);
-                maxGreen = Math.Max(maxGreen, session.ContainsKey("green") ? session["green"] : 0);
-                maxBlue = Math.Max(maxBlue, session.ContainsKey("blue") ? session["blue"] : 0);
-            }
-
-            return maxRed <= 12 && maxGreen <= 13 && maxBlue <= 14;
+            return (maxRed, maxGreen, maxBlue);
         }
 
         private Answer CalculateNumberOfPossibleGames()
         {
-            return _input.Where(IsGamePossible).Sum(x => x.Item1);
-        }
-
-        internal static int MinimalCubeCountForGame((int, List<Dictionary<string, int>>) game)
-        {
-            // red, green, or blue
-            var maxRed = 0;
-            var maxGreen = 0;
-            var maxBlue = 0;
-
-            foreach (var session in game.Item2)
-            {
-                maxRed = Math.Max(maxRed, session.ContainsKey("red") ? session["red"] : 0);
-                maxGreen = Math.Max(maxGreen, session.ContainsKey("green") ? session["green"] : 0);
-                maxBlue = Math.Max(maxBlue, session.ContainsKey("blue") ? session["blue"] : 0);
-            }
-
-            return maxRed * maxGreen * maxBlue;
+            return _input
+                .Select(game => (game.Item1, GetMaxRequired(game)))
+                .Where(x => x.Item2.Item1 <= 12 && x.Item2.Item2 <= 13 && x.Item2.Item3 <= 14)
+                .Select(x => x.Item1)
+                .Sum();
         }
 
         private Answer MinimalCubeCount()
         {
-            return _input.Select(MinimalCubeCountForGame).Sum();
+            return _input
+                .Select(GetMaxRequired)
+                .Select(x => x.Item1 * x.Item2 * x.Item3)
+                .Sum();
         }
 
         public override ValueTask<string> Solve_1() => new(CalculateNumberOfPossibleGames());

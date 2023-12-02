@@ -16,5 +16,10 @@
                 yield return index;
             }
         }
+
+        public static TV GetValueOrDefault<TK, TV>(this Dictionary<TK, TV> dictionary, TK key, TV defaultValue)
+        {
+            return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
+        }
     }
 }
