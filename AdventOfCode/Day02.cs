@@ -1,24 +1,39 @@
-﻿using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AdventOfCode.Tests")]
 namespace AdventOfCode
 {
     public sealed class Day02 : BaseTestableDay
     {
-        private readonly List<(int, List<Dictionary<string, int>>)> _input;
+        private readonly List<Game> _input;
+
+        public class GameSession
+        {
+            public required int Red;
+
+            public required int Green;
+
+            public required int Blue;
+        }
+
+        public class Game
+        {
+            public required int Id;
+
+            public required List<GameSession> Sessions;
+        }
 
         public Day02() : this(RunMode.Real)
         {
         }
 
-        private (int, List<Dictionary<string, int>>) ConvertTextToGame(string text)
+        private Game ConvertTextToGame(string text)
         {
-            // text = Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            // text = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
             var splitByColon = text.Split(':').Select(s => s.Trim()).ToList();
             var gameId = int.Parse(splitByColon[0][5..]);
 
-            // sessions = 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            // sessions = "3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
             var sessions = splitByColon[1]
                 .Split(';')
                 .Select(s => s.Trim())
@@ -28,16 +43,29 @@ namespace AdventOfCode
 
             foreach (var session in sessions)
             {
-                var cubes = session // 3 blue, 4 red
+                var cubes = session // session = "3 blue, 4 red"
                     .Split(',')
                     .Select(s => s.Trim())
-                    .Select(s => s.Split(' ')) // 3 blue => [3, blue]
+                    .Select(s => s.Split(' ')) // "3 blue" => ["3", "blue"]
                     .ToDictionary(x => x[1], x => int.Parse(x[0]));
 
                 result.Add(cubes);
             }
 
-            return (gameId, result);
+            return new Game
+            {
+                Id = gameId,
+                Sessions = result
+                    .Select(
+                        session => new GameSession()
+                        {
+                            Red = session.GetValueOrDefault("red", 0),
+                            Blue = session.GetValueOrDefault("blue", 0),
+                            Green = session.GetValueOrDefault("green", 0),
+                        }
+                    )
+                    .ToList()
+            };
         }
 
         public Day02(RunMode runMode)
@@ -50,11 +78,11 @@ namespace AdventOfCode
                 .ToList();
         }
 
-        internal static (int, int, int) GetMaxRequired((int, List<Dictionary<string, int>>) game)
+        internal static (int Red, int Green, int Blue) GetMaxRequired(Game game)
         {
-            var maxRed = game.Item2.Select(session => session.GetValueOrDefault("red", 0)).Max();
-            var maxGreen = game.Item2.Select(session => session.GetValueOrDefault("green", 0)).Max();
-            var maxBlue = game.Item2.Select(session => session.GetValueOrDefault("blue", 0)).Max();
+            var maxRed = game.Sessions.Select(session => session.Red).Max();
+            var maxGreen = game.Sessions.Select(session => session.Green).Max();
+            var maxBlue = game.Sessions.Select(session => session.Blue).Max();
 
             return (maxRed, maxGreen, maxBlue);
         }
@@ -62,9 +90,9 @@ namespace AdventOfCode
         private Answer CalculateNumberOfPossibleGames()
         {
             return _input
-                .Select(game => (game.Item1, GetMaxRequired(game)))
-                .Where(x => x.Item2.Item1 <= 12 && x.Item2.Item2 <= 13 && x.Item2.Item3 <= 14)
-                .Select(x => x.Item1)
+                .Select(game => (gameId: game.Id, max: GetMaxRequired(game)))
+                .Where(x => x.max is { Red: <= 12, Green: <= 13, Blue: <= 14 })
+                .Select(x => x.gameId)
                 .Sum();
         }
 
@@ -72,7 +100,7 @@ namespace AdventOfCode
         {
             return _input
                 .Select(GetMaxRequired)
-                .Select(x => x.Item1 * x.Item2 * x.Item3)
+                .Select(x => x.Red * x.Green * x.Blue)
                 .Sum();
         }
 
