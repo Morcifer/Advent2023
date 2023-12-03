@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace AdventOfCode
+﻿namespace AdventOfCode
 {
     public static class Utilities
     {
