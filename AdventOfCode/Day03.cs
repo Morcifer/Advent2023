@@ -24,20 +24,6 @@ namespace AdventOfCode
         {
             var numberLocations = new List<(int Number, int Row, List<int> Columns)>();
 
-            void MaybeUpdateNumberLocations(int rowIndex, List<int> columnIndices)
-            {
-                if (columnIndices.Any())
-                {
-                    numberLocations.Add(
-                        (
-                            int.Parse(_input[rowIndex][columnIndices[0]..(columnIndices[^1] + 1)]),
-                            rowIndex,
-                            columnIndices
-                        )
-                    );
-                }
-            }
-
             foreach (var (rowIndex, row) in _input.Enumerate())
             {
                 var foundDigits = new List<int>();
@@ -60,24 +46,37 @@ namespace AdventOfCode
             }
 
             return numberLocations;
+
+            void MaybeUpdateNumberLocations(int rowIndex, List<int> columnIndices)
+            {
+                if (columnIndices.Any())
+                {
+                    numberLocations.Add(
+                        (
+                            int.Parse(_input[rowIndex][columnIndices[0]..(columnIndices[^1] + 1)]),
+                            rowIndex,
+                            columnIndices
+                        )
+                    );
+                }
+            }
         }
 
         private bool IsNextToSymbol(int row, List<int> columns)
         {
-            var neighbors = new List<(int, int)>()
+            var leftRightNeighbors = new List<(int, int)>()
             {
                 (row, columns.Min() - 1),
                 (row, columns.Max() + 1),
             };
+            
+            var upDownNeighbors = Enumerable
+                .Range(columns.Min() - 1, columns.Count + 2)
+                .SelectMany(column => new List<(int, int)> { (row - 1, column), (row + 1, column) })
+                .ToList();
 
-            for (var i = columns.Min() - 1; i <= columns.Max() + 1; i++)
-            {
-                neighbors.Add((row - 1, i));
-                neighbors.Add((row + 1, i));
-            }
-
-            return neighbors
-                .Where(x => x.Item1 >= 0 && x.Item1 < _input[0].Length && x.Item2 >= 0 && x.Item2 < _input[0].Length)
+            return leftRightNeighbors.Concat(upDownNeighbors)
+                .Where(x => 0 <= x.Item1 && x.Item1 < _input[0].Length && 0 <= x.Item2 && x.Item2 < _input[0].Length)
                 .Any(x => _input[x.Item1][x.Item2] != '.' && !char.IsDigit(_input[x.Item1][x.Item2]));
         }
 
