@@ -24,17 +24,13 @@ namespace AdventOfCode
         {
             var numberLocations = new List<(int Number, int Row, List<int> Columns)>();
 
-            for (var rowIndex = 0; rowIndex < _input.Count; rowIndex++)
+            foreach (var (rowIndex, row) in _input.Enumerate())
             {
-                // I need an Enumerate method!
-                var row = _input[rowIndex];
-                var chars = row.ToCharArray();
-
                 var foundDigits = new List<int>();
 
-                for (var columnIndex = 0; columnIndex < chars.Length; columnIndex++)
+                foreach (var (columnIndex, character) in row.ToCharArray().Enumerate())
                 {
-                    if (char.IsDigit(chars[columnIndex]))
+                    if (char.IsDigit(character))
                     {
                         foundDigits.Add(columnIndex);
                     }
@@ -110,12 +106,11 @@ namespace AdventOfCode
             // Find all gear locations
             var gearLocations = new List<(int Row, int Column)>();
 
-            for (var rowIndex = 0; rowIndex < _input.Count; rowIndex++)
+            foreach (var (rowIndex, row) in _input.Enumerate())
             {
-                var row = _input[rowIndex];
-                for (var columnIndex = 0; columnIndex < row.Length; columnIndex++)
+                foreach (var (columnIndex, character) in row.ToCharArray().Enumerate())
                 {
-                    if (row[columnIndex] == '*')
+                    if (character == '*')
                     {
                         gearLocations.Add((rowIndex, columnIndex));
                     }

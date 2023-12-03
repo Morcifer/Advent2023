@@ -1,4 +1,6 @@
-﻿namespace AdventOfCode
+﻿using System.Collections.Generic;
+
+namespace AdventOfCode
 {
     public static class Utilities
     {
@@ -14,6 +16,16 @@
                 }
 
                 yield return index;
+            }
+        }
+
+        public static IEnumerable<(int Index, T Value)> Enumerate<T>(this IEnumerable<T> enumerable)
+        {
+            var i = 0;
+
+            foreach (var e in enumerable)
+            {
+                yield return (i++, e);
             }
         }
 
