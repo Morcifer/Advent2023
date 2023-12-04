@@ -4,11 +4,12 @@
 }
 else if (args.Length == 1 && args[0].Contains("all", StringComparison.CurrentCultureIgnoreCase))
 {
-    await Solver.SolveAll(opt =>
-    {
-        opt.ShowConstructorElapsedTime = true;
-        opt.ShowTotalElapsedTimePerDay = true;
-    });
+    await Solver.SolveAll(
+        opt =>
+        {
+            opt.ShowConstructorElapsedTime = true;
+            opt.ShowTotalElapsedTimePerDay = true;
+        });
 }
 else
 {

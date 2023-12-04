@@ -3,8 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Real ignore list (for my own files)
+# Real ignore list (for my own files that I don't want to commit)
 /AdventOfCode/Inputs/*
+/.editorconfig
 
 # User-specific files
 *.user
