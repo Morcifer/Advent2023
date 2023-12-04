@@ -21,10 +21,4 @@ public static class Utilities
     {
         return enumerable.Select((v, i) => (i, v)); // Sure would have been nicer if I could just do this in the foreach directly...
     }
-
-    public static TValue GetValueOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
-        where TKey : notnull
-    {
-        return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
-    }
 }
