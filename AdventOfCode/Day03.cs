@@ -130,7 +130,7 @@ public sealed class Day03 : BaseTestableDay
             .Sum();
     }
 
-    public override ValueTask<string> Solve_1() => new(CalculatePartNumberSum());
+    public override ValueTask<string> Solve_1() => CalculatePartNumberSum();
 
-    public override ValueTask<string> Solve_2() => new(CalculateGearRatioSums());
+    public override ValueTask<string> Solve_2() => CalculateGearRatioSums();
 }

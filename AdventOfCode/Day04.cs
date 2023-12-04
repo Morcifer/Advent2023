@@ -97,7 +97,7 @@ public sealed class Day04 : BaseTestableDay
         return cardAmounts.Values.Sum();
     }
 
-    public override ValueTask<string> Solve_1() => new(CalculateCardPoints());
+    public override ValueTask<string> Solve_1() => CalculateCardPoints();
 
-    public override ValueTask<string> Solve_2() => new(CalculateCardNumber());
+    public override ValueTask<string> Solve_2() => CalculateCardNumber();
 }
