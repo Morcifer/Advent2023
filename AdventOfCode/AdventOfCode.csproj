@@ -17,4 +17,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="AdventOfCode.Tests" />
+  </ItemGroup>
+
 </Project>
