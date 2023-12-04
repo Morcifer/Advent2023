@@ -94,7 +94,7 @@ public sealed class Day01 : BaseTestableDay
         return _input.Select(CalculateSingleLiteralCalibrationValue).Sum();
     }
 
-    public override ValueTask<string> Solve_1() => new(CalculateDigitCalibrationValue());
+    public override ValueTask<string> Solve_1() => CalculateDigitCalibrationValue();
 
-    public override ValueTask<string> Solve_2() => new(CalculateLiteralCalibrationValue());
+    public override ValueTask<string> Solve_2() => CalculateLiteralCalibrationValue();
 }

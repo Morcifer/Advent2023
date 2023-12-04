@@ -28,5 +28,6 @@
         public static implicit operator Answer(uint value) => new(value.ToString());
 
         public static implicit operator string(Answer answer) => answer.Value;
+        public static implicit operator ValueTask<string>(Answer answer) => new(answer.Value);
     }
 }

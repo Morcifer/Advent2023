@@ -101,7 +101,7 @@ public sealed class Day02 : BaseTestableDay
             .Sum();
     }
 
-    public override ValueTask<string> Solve_1() => new(CalculateNumberOfPossibleGames());
+    public override ValueTask<string> Solve_1() => CalculateNumberOfPossibleGames();
 
-    public override ValueTask<string> Solve_2() => new(MinimalCubeCount());
+    public override ValueTask<string> Solve_2() => MinimalCubeCount();
 }
