@@ -1,4 +1,4 @@
-﻿namespace AdventOfCode;
+namespace AdventOfCode;
 
 public sealed class Day01 : BaseTestableDay
 {
@@ -24,7 +24,7 @@ public sealed class Day01 : BaseTestableDay
         var firstDigit = letters.FirstOrDefault(char.IsDigit, '0') - '0';
         var lastDigit = letters.LastOrDefault(char.IsDigit, '0') - '0';
 
-        return firstDigit * 10 + lastDigit;
+        return (firstDigit * 10) + lastDigit;
     }
 
     private Answer CalculateDigitCalibrationValue()
@@ -44,7 +44,7 @@ public sealed class Day01 : BaseTestableDay
             { "six", "s6x" },
             { "seven", "s7n" },
             { "eight", "e8t" },
-            { "nine", "n9e" }
+            { "nine", "n9e" },
         };
 
         foreach (var kvp in literals)
@@ -67,7 +67,7 @@ public sealed class Day01 : BaseTestableDay
             { "six", "6" },
             { "seven", "7" },
             { "eight", "8" },
-            { "nine", "9" }
+            { "nine", "9" },
         };
 
         var digitMatches = literals
@@ -86,7 +86,7 @@ public sealed class Day01 : BaseTestableDay
         var firstDigit = (literals.TryGetValue(first, out var firstLiteral) ? firstLiteral : first)[0] - '0';
         var lastDigit = (literals.TryGetValue(last, out var lastLiteral) ? lastLiteral : last)[0] - '0';
 
-        return firstDigit * 10 + lastDigit;
+        return (firstDigit * 10) + lastDigit;
     }
 
     private Answer CalculateLiteralCalibrationValue()
