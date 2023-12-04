@@ -17,13 +17,6 @@ public static class Utilities
         }
     }
 
-    public static IEnumerable<(int Index, T Value)> Enumerate<T>(this IEnumerable<T> enumerable)
-    {
-        var i = 0;
-
-        foreach (var e in enumerable)
-        {
-            yield return (i++, e);
-        }
-    }
+    public static IEnumerable<(int Index, T Value)> EnumerateWithIndex<T>(this IEnumerable<T> enumerable) =>
+        enumerable.Select((v, i) => (i, v));
 }

@@ -21,12 +21,11 @@ public sealed class Day03 : BaseTestableDay
     {
         var numberLocations = new List<(int Number, int Row, List<int> Columns)>();
 
-        foreach (var (rowIndex, row) in _input.Enumerate())
+        foreach (var (rowIndex, row) in _input.EnumerateWithIndex())
         {
             var foundDigits = new List<int>();
 
-            foreach (var (columnIndex, character) in row.ToCharArray().Enumerate())
-            {
+            foreach (var (columnIndex, character) in row.ToCharArray().EnumerateWithIndex())
                 if (char.IsDigit(character))
                 {
                     foundDigits.Add(columnIndex);
@@ -36,7 +35,6 @@ public sealed class Day03 : BaseTestableDay
                     MaybeUpdateNumberLocations(rowIndex, foundDigits);
                     foundDigits = new List<int>();
                 }
-            }
 
             // Don't forget the last update!
             MaybeUpdateNumberLocations(rowIndex, foundDigits);
@@ -91,16 +89,10 @@ public sealed class Day03 : BaseTestableDay
     {
         var gearLocations = new List<(int Row, int Column)>();
 
-        foreach (var (rowIndex, row) in _input.Enumerate())
-        {
-            foreach (var (columnIndex, character) in row.ToCharArray().Enumerate())
-            {
-                if (character == '*')
-                {
-                    gearLocations.Add((rowIndex, columnIndex));
-                }
-            }
-        }
+        foreach (var (rowIndex, row) in _input.EnumerateWithIndex())
+        foreach (var (columnIndex, character) in row.ToCharArray().EnumerateWithIndex())
+            if (character == '*')
+                gearLocations.Add((rowIndex, columnIndex));
 
         return gearLocations;
     }
