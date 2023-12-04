@@ -1,8 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("AdventOfCode.Tests")]
-
-namespace AdventOfCode;
+﻿namespace AdventOfCode;
 
 public sealed class Day01 : BaseTestableDay
 {
