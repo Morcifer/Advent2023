@@ -1,3 +1,5 @@
+using MoreLinq;
+
 namespace AdventOfCode;
 
 public sealed class Day05 : BaseTestableDay
@@ -132,9 +134,8 @@ public sealed class Day05 : BaseTestableDay
 
     private Answer GetClosestLocationForRanges()
     {
-        return Enumerable.Range(0, _seeds.Count / 2)
-            .Select(i => (_seeds[i * 2], _seeds[i * 2] + _seeds[i * 2 + 1] - 1))
-            .SelectMany(x => GetLocationRanges(x.Item1, x.Item2))
+        return _seeds.Batch(2)
+            .SelectMany(x => GetLocationRanges(x[0], x[0] + x[1] - 1))
             .Select(range => range.LocationRangeFrom)
             .Min();
     }
