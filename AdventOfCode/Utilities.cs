@@ -1,4 +1,4 @@
-﻿namespace AdventOfCode;
+namespace AdventOfCode;
 
 public static class Utilities
 {
@@ -20,5 +20,25 @@ public static class Utilities
     public static IEnumerable<(int Index, T Value)> Enumerate<T>(this IEnumerable<T> enumerable)
     {
         return enumerable.Select((v, i) => (i, v)); // Sure would have been nicer if I could just do this in the foreach directly...
+    }
+
+    public static IEnumerable<List<string>> Cluster(this IEnumerable<string> text)
+    {
+        var cluster = new List<string>();
+
+        foreach (var line in text)
+        {
+            if (line == "")
+            {
+                yield return cluster;
+                cluster = new List<string>();
+            }
+            else
+            {
+                cluster.Add(line);
+            }
+        }
+
+        yield return cluster;
     }
 }
