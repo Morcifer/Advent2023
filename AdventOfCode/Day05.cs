@@ -51,6 +51,7 @@ public sealed class Day05 : BaseTestableDay
 
         foreach (var conversion in _conversions)
         {
+            // TODO: Check if this is correct for edge cases, i.e. ranges of length 1...
             var validConversion = conversion.Conversions.FirstOrDefault(x => x.SourceRangeStart <= value && value <= x.SourceRangeStart + x.RangeLength);
             value = validConversion == default ? value : validConversion.DestinationRangeStart + (value - validConversion.SourceRangeStart);
         }
@@ -65,12 +66,93 @@ public sealed class Day05 : BaseTestableDay
             .Min();
     }
 
-    private Answer GetSomething()
+    internal List<(long LocationRangeFrom, long LocationRangeTo)> GetLocationRanges(long seedRangeFrom, long seedRangeTo)
     {
-        return -1;
+        //Console.WriteLine($"Figuring out range of {seedRangeFrom} -> {seedRangeTo}");
+        var ranges = new List<(long RangeFrom, long RangeTo)>() { (seedRangeFrom, seedRangeTo) };
+
+        foreach (var conversion in _conversions)
+        {
+            //Console.WriteLine($"Conversion {conversion.From} to {conversion.To}");
+            var newRanges = new List<(long RangeFrom, long RangeTo)>();
+
+            foreach (var range in ranges)
+            {
+                var (rangeFrom, rangeTo) = range;
+
+                while (rangeFrom <= rangeTo)
+                {
+                    // Find first containing conversion.
+                    var validConversion = conversion.Conversions
+                        .FirstOrDefault(x => x.SourceRangeStart <= rangeFrom && rangeFrom <= x.SourceRangeStart + x.RangeLength - 1);
+
+                    if (validConversion == default)
+                    {
+                        // Find closest conversion
+                        var closeConversions = conversion.Conversions
+                            .Where(x => x.SourceRangeStart >= rangeFrom)
+                            .ToList();
+
+                        if (!closeConversions.Any())
+                        {
+                            newRanges.Add((rangeFrom, rangeTo));
+                            break;
+                        }
+
+                        var closestConversion = closeConversions.MinBy(x => x.SourceRangeStart);
+
+                        if (rangeTo < closestConversion.SourceRangeStart)
+                        {
+                            newRanges.Add((rangeFrom, rangeTo));
+                            break;
+                        }
+
+                        newRanges.Add((rangeFrom, closestConversion.SourceRangeStart - 1));
+                        rangeFrom = closestConversion.SourceRangeStart;
+                    }
+                    else
+                    {
+                        // Check if I fit within the range of the valid conversion
+                        var validConversionRangeEnd = validConversion.SourceRangeStart + validConversion.RangeLength - 1;
+                        if (rangeTo <= validConversionRangeEnd)
+                        {
+                            newRanges.Add(
+                                (
+                                    validConversion.DestinationRangeStart + (rangeFrom - validConversion.SourceRangeStart),
+                                    validConversion.DestinationRangeStart + (rangeTo - validConversion.SourceRangeStart)
+                                ));
+
+                            break;
+                        }
+
+                        newRanges.Add(
+                            (
+                                validConversion.DestinationRangeStart + (rangeFrom - validConversion.SourceRangeStart),
+                                validConversion.DestinationRangeStart + (validConversionRangeEnd - validConversion.SourceRangeStart)
+                            ));
+
+                        rangeFrom = validConversionRangeEnd + 1;
+                    }
+                }
+            }
+
+            //Console.WriteLine($"Conversion {conversion.From} to {conversion.To} ends with {newRanges.Count} ranges");
+            ranges = newRanges;
+        }
+
+        return ranges;
+    }
+
+    private Answer GetClosestLocationForRanges()
+    {
+        return Enumerable.Range(0, _seeds.Count / 2)
+            .Select(i => (_seeds[i * 2], _seeds[i * 2] + _seeds[i * 2 + 1] - 1))
+            .SelectMany(x => GetLocationRanges(x.Item1, x.Item2))
+            .Select(range => range.LocationRangeFrom)
+            .Min();
     }
 
     public override ValueTask<string> Solve_1() => GetClosestLocation();
 
-    public override ValueTask<string> Solve_2() => GetSomething();
+    public override ValueTask<string> Solve_2() => GetClosestLocationForRanges();
 }
