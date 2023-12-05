@@ -26,7 +26,7 @@ public sealed class Day05 : BaseTestableDay
     {
         public required string From;
         public required string To;
-        public required List<(long DestinationRangeStart, long SourceRangeStart, long RangeLength)> Conversions;
+        public required List<(long SourceRangeStart, long SourceRangeEnd, long SourceToDestinationOffset)> Ranges;
     }
 
     private Conversion ConvertTextToConversion(List<string> cluster)
@@ -37,10 +37,11 @@ public sealed class Day05 : BaseTestableDay
         {
             From = mappingName[0],
             To = mappingName[2],
-            Conversions = cluster
+            Ranges = cluster
                 .Skip(1)
                 .Select(s => s.Split(' ').Select(long.Parse).ToList())
-                .Select(l => (l[0], l[1], l[2]))
+                .Select(l => (DestinationRangeStart: l[0], SourceRangeStart: l[1], RangeLength: l[2]))
+                .Select(x => (x.SourceRangeStart, x.SourceRangeStart + x.RangeLength - 1, x.DestinationRangeStart - x.SourceRangeStart))
                 .ToList(),
         };
     }
@@ -51,9 +52,12 @@ public sealed class Day05 : BaseTestableDay
 
         foreach (var conversion in _conversions)
         {
-            // TODO: Check if this is correct for edge cases, i.e. ranges of length 1...
-            var validConversion = conversion.Conversions.FirstOrDefault(x => x.SourceRangeStart <= value && value <= x.SourceRangeStart + x.RangeLength);
-            value = validConversion == default ? value : validConversion.DestinationRangeStart + (value - validConversion.SourceRangeStart);
+            var validConversion = conversion.Ranges
+                .FirstOrDefault(x => x.SourceRangeStart <= value && value <= x.SourceRangeEnd);
+
+            value = validConversion == default
+                ? value
+                : value + validConversion.SourceToDestinationOffset;
         }
 
         return value;
@@ -83,13 +87,13 @@ public sealed class Day05 : BaseTestableDay
                 while (rangeFrom <= rangeTo)
                 {
                     // Find first containing conversion.
-                    var validConversion = conversion.Conversions
-                        .FirstOrDefault(x => x.SourceRangeStart <= rangeFrom && rangeFrom <= x.SourceRangeStart + x.RangeLength - 1);
+                    var validConversion = conversion.Ranges
+                        .FirstOrDefault(x => x.SourceRangeStart <= rangeFrom && rangeFrom <= x.SourceRangeEnd);
 
                     if (validConversion == default)
                     {
-                        // Find closest conversion
-                        var closeConversions = conversion.Conversions
+                        // Find closest conversion (which might overlap with the range).
+                        var closeConversions = conversion.Ranges
                             .Where(x => x.SourceRangeStart >= rangeFrom)
                             .ToList();
 
@@ -101,37 +105,20 @@ public sealed class Day05 : BaseTestableDay
 
                         var closestConversion = closeConversions.MinBy(x => x.SourceRangeStart);
 
-                        if (rangeTo < closestConversion.SourceRangeStart)
-                        {
-                            newRanges.Add((rangeFrom, rangeTo));
-                            break;
-                        }
-
-                        newRanges.Add((rangeFrom, closestConversion.SourceRangeStart - 1));
+                        newRanges.Add((rangeFrom, Math.Min(rangeTo, closestConversion.SourceRangeStart - 1)));
                         rangeFrom = closestConversion.SourceRangeStart;
                     }
                     else
                     {
-                        // Check if I fit within the range of the valid conversion
-                        var validConversionRangeEnd = validConversion.SourceRangeStart + validConversion.RangeLength - 1;
-                        if (rangeTo <= validConversionRangeEnd)
-                        {
-                            newRanges.Add(
-                                (
-                                    validConversion.DestinationRangeStart + (rangeFrom - validConversion.SourceRangeStart),
-                                    validConversion.DestinationRangeStart + (rangeTo - validConversion.SourceRangeStart)
-                                ));
-
-                            break;
-                        }
-
+                        // Check if the range fully fits within the valid conversion
                         newRanges.Add(
                             (
-                                validConversion.DestinationRangeStart + (rangeFrom - validConversion.SourceRangeStart),
-                                validConversion.DestinationRangeStart + (validConversionRangeEnd - validConversion.SourceRangeStart)
-                            ));
+                                validConversion.SourceToDestinationOffset + rangeFrom,
+                                validConversion.SourceToDestinationOffset + Math.Min(rangeTo, validConversion.SourceRangeEnd)
+                            )
+                        );
 
-                        rangeFrom = validConversionRangeEnd + 1;
+                        rangeFrom = validConversion.SourceRangeEnd + 1;
                     }
                 }
             }
