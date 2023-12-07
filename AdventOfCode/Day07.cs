@@ -1,3 +1,5 @@
+using MoreLinq;
+
 namespace AdventOfCode;
 
 public sealed class Day07 : BaseTestableDay
@@ -124,16 +126,21 @@ public sealed class Day07 : BaseTestableDay
         var originalHand = new Hand(handString, handString, jokerMode: false);
 
         // Find all possible other hands, and choose the best one.
-        var replacements = handString.ToCharArray().GroupBy(c => c).Select(c => c.Key).Concat(new List<char>() { 'A', 'J' }).Distinct().ToList();
+        var replacements = handString
+            .ToCharArray()
+            .GroupBy(c => c)
+            .Select(c => c.Key)
+            .Concat(new List<char> { 'A', 'J' })
+            .Distinct()
+            .ToList();
 
-        var alternativeHands = (
-            from newCard0 in handString[0] == 'J' ? replacements : new List<char> { handString[0] }
-            from newCard1 in handString[1] == 'J' ? replacements : new List<char> { handString[1] }
-            from newCard2 in handString[2] == 'J' ? replacements : new List<char> { handString[2] }
-            from newCard3 in handString[3] == 'J' ? replacements : new List<char> { handString[3] }
-            from newCard4 in handString[4] == 'J' ? replacements : new List<char> { handString[4] }
-            select $"{newCard0}{newCard1}{newCard2}{newCard3}{newCard4}"
-        ).ToList();
+        var alternativeHands = (handString[0] == 'J' ? replacements : new List<char> { handString[0] })
+            .Cartesian(handString[1] == 'J' ? replacements : new List<char> { handString[1] }, (c0, c1) => (c0, c1))
+            .Cartesian(handString[2] == 'J' ? replacements : new List<char> { handString[2] }, (x, c2) => (x.c0, x.c1, c2))
+            .Cartesian(handString[3] == 'J' ? replacements : new List<char> { handString[3] }, (x, c3) => (x.c0, x.c1, x.c2, c3))
+            .Cartesian(handString[4] == 'J' ? replacements : new List<char> { handString[4] }, (x, c4) => (x.c0, x.c1, x.c2, x.c3, c4))
+            .Select(x => $"{x.c0}{x.c1}{x.c2}{x.c3}{x.c4}")
+            .ToList();
 
         var bestJokerHand = alternativeHands
             .Select(jokerString => new Hand(handString, jokerString, jokerMode: true))
