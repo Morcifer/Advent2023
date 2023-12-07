@@ -1,5 +1,3 @@
-using MoreLinq;
-
 namespace AdventOfCode;
 
 public sealed class Day07 : BaseTestableDay
@@ -33,13 +31,13 @@ public sealed class Day07 : BaseTestableDay
 
     public class Hand : IComparable
     {
+        private readonly bool _jokerMode;
         private readonly List<int> _cards;
-        private readonly List<int> _handTypeCards;
 
-        public Hand(string cardString, string jokerCardString, bool jokerMode)
+        public Hand(string cardString, bool jokerMode)
         {
+            _jokerMode = jokerMode;
             _cards = TranslateCardString(cardString, jokerMode ? "1" : "11");
-            _handTypeCards = TranslateCardString(jokerCardString, "11"); // Since these aren't used for tie-breaker, the value can be consistent with part 1.
         }
 
         private static List<int> TranslateCardString(string cardString, string jValue)
@@ -58,8 +56,33 @@ public sealed class Day07 : BaseTestableDay
 
         private HandType GetHandType()
         {
-            var counts = _handTypeCards.GroupBy(c => c).Select(g => g.Count()).ToList();
+            if (_jokerMode)
+            {
+                var counts = _cards.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
+                var jokers = counts.GetValueOrDefault(1, 0);
 
+                var betterCounts = counts.Where(kvp => kvp.Key != 1).Select(kvp => kvp.Value).ToList();
+
+                if (betterCounts.Count == 0)
+                {
+                    return HandType.FiveOfAKind;
+                }
+
+                var maxCountIndex = betterCounts.Enumerate().MaxBy(x => x.Value).Index;
+                betterCounts[maxCountIndex] += jokers;
+
+                return HandTypeFromCounts(betterCounts);
+            }
+            else
+            {
+                var counts = _cards.GroupBy(c => c).Select(g => g.Count()).ToList();
+                return HandTypeFromCounts(counts);
+            }
+
+        }
+
+        private HandType HandTypeFromCounts(List<int> counts)
+        {
             return counts.Max() switch
             {
                 5 => HandType.FiveOfAKind,
@@ -108,30 +131,10 @@ public sealed class Day07 : BaseTestableDay
         var handString = split[0];
         var bidString = split[1];
 
-        var originalHand = new Hand(handString, handString, jokerMode: false);
+        var originalHand = new Hand(handString, jokerMode: false);
+        var jokerHand = new Hand(handString, jokerMode: true);
 
-        // Find all possible other hands, and choose the best one.
-        var replacements = handString
-            .ToCharArray()
-            .GroupBy(c => c)
-            .Select(c => c.Key)
-            .Concat(new List<char> { 'A', 'J' })
-            .Distinct()
-            .ToList();
-
-        var alternativeHands = (handString[0] == 'J' ? replacements : new List<char> { handString[0] })
-            .Cartesian(handString[1] == 'J' ? replacements : new List<char> { handString[1] }, (c0, c1) => (c0, c1))
-            .Cartesian(handString[2] == 'J' ? replacements : new List<char> { handString[2] }, (x, c2) => (x.c0, x.c1, c2))
-            .Cartesian(handString[3] == 'J' ? replacements : new List<char> { handString[3] }, (x, c3) => (x.c0, x.c1, x.c2, c3))
-            .Cartesian(handString[4] == 'J' ? replacements : new List<char> { handString[4] }, (x, c4) => (x.c0, x.c1, x.c2, x.c3, c4))
-            .Select(x => $"{x.c0}{x.c1}{x.c2}{x.c3}{x.c4}")
-            .ToList();
-
-        var bestJokerHand = alternativeHands
-            .Select(jokerString => new Hand(handString, jokerString, jokerMode: true))
-            .Aggregate((bestThusFar, next) => bestThusFar.CompareTo(next) == 1 ? bestThusFar : next); // Yuck.
-
-        return (originalHand, bestJokerHand, int.Parse(bidString));
+        return (originalHand, jokerHand, int.Parse(bidString));
     }
 
     private Answer CalculateWinnings()
