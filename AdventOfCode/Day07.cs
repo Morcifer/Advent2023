@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using MoreLinq;
 
 namespace AdventOfCode;
@@ -58,32 +59,16 @@ public sealed class Day07 : BaseTestableDay
 
         private HandType GetHandType()
         {
-            var counter = _handTypeCards.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
-            var counterCounter = counter.Values.GroupBy(n => n).ToDictionary(g => g.Key, g => g.Count());
+            var counts = _handTypeCards.GroupBy(c => c).Select(g => g.Count()).ToList();
 
-            if (counterCounter.ContainsKey(5))
+            return counts.Count switch
             {
-                return HandType.FiveOfAKind;
-            }
-
-            if (counterCounter.ContainsKey(4))
-            {
-                return HandType.FourOfAKind;
-            }
-
-            if (counterCounter.ContainsKey(3))
-            {
-                return counterCounter.ContainsKey(2)
-                    ? HandType.FullHouse
-                    : HandType.ThreeOfAKind;
-            }
-
-            if (counterCounter.Count == 1)
-            {
-                return HandType.HighCard;
-            }
-
-            return counterCounter[2] == 1 ? HandType.OnePair : HandType.TwoPairs;
+                1 => HandType.FiveOfAKind,
+                2 => counts.Contains(4) ? HandType.FourOfAKind : HandType.FullHouse,
+                3 => counts.Contains(3) ? HandType.ThreeOfAKind : HandType.TwoPairs,
+                4 => HandType.OnePair,
+                _ => HandType.HighCard,
+            };
         }
 
         public int CompareTo(object? other)

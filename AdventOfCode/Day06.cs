@@ -35,6 +35,8 @@ public sealed class Day06 : BaseTestableDay
 
     private Answer GetStupidWinningPossibilities()
     {
+        var delta = _longRace.Time * _longRace.Time - 4 * _longRace.DistanceRecord;
+
         for (var startTime = (long)0; startTime <= _longRace.Time; startTime++)
         {
             var distance = (_longRace.Time - startTime) * startTime;
@@ -48,7 +50,17 @@ public sealed class Day06 : BaseTestableDay
         return -1;
     }
 
+    private Answer GetSmartWinningPossibilities()
+    {
+        var delta = Math.Pow(_longRace.Time, 2) - (4 * _longRace.DistanceRecord);
+
+        var start = (long)Math.Ceiling((_longRace.Time - Math.Sqrt(delta)) / 2);
+        var end = (long)Math.Floor((_longRace.Time + Math.Sqrt(delta)) / 2);
+
+        return end - start + 1;
+    }
+
     public override ValueTask<string> Solve_1() => GetWinningPossibilities();
 
-    public override ValueTask<string> Solve_2() => GetStupidWinningPossibilities();
+    public override ValueTask<string> Solve_2() => GetSmartWinningPossibilities();
 }
