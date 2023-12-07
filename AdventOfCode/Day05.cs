@@ -33,7 +33,7 @@ public sealed class Day05 : BaseTestableDay
 
     private Conversion ConvertTextToConversion(List<string> cluster)
     {
-        var mappingName = cluster[0].Split(new[] { '-', ' ' }).ToList();
+        var mappingName = cluster[0].Split('-', ' ').ToList();
 
         return new Conversion
         {

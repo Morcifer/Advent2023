@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using static AdventOfCode.Day07;
 
 namespace AdventOfCode.Tests;
 
+[SuppressMessage("ReSharper", "StringLiteralTypo")]
 public class TestDay07
 {
     [Theory]
@@ -14,11 +16,19 @@ public class TestDay07
     }
 
     [Theory]
-    [InlineData("32T3K 1", "KK677 1", -1)]
-    public void Day7_Part2_SingleRowCalculation(string hand1, string hand2, int expected)
+    [InlineData("KK677 1", "32T3K 1", 1)]
+    public void Day7_HandOrdering(string hand1, string hand2, int expected)
     {
-        ConvertTextToHand(hand1).CompareTo(ConvertTextToHand(hand2)).Should().Be(expected);
-        ConvertTextToHand(hand2).CompareTo(ConvertTextToHand(hand1)).Should().Be(-expected);
+        ConvertTextToHandsAndBid(hand1).Item1.CompareTo(ConvertTextToHandsAndBid(hand2).Item1).Should().Be(expected);
+        ConvertTextToHandsAndBid(hand2).Item1.CompareTo(ConvertTextToHandsAndBid(hand1).Item1).Should().Be(-expected);
+    }
+
+    [Theory]
+    [InlineData("QQQJA 483", "T55J5 684", 1)]
+    public void Day7_JokerHandOrdering(string hand1, string hand2, int expected)
+    {
+        ConvertTextToHandsAndBid(hand1).Item2.CompareTo(ConvertTextToHandsAndBid(hand2).Item2).Should().Be(expected);
+        ConvertTextToHandsAndBid(hand2).Item2.CompareTo(ConvertTextToHandsAndBid(hand1).Item2).Should().Be(-expected);
     }
 
     [Theory]
