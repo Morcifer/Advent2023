@@ -33,10 +33,9 @@ public sealed class Day06 : BaseTestableDay
             .Aggregate(1, (x, y) => x * y); // .Product(). Should extract this at some point.
     }
 
+    // ReSharper disable once UnusedMember.Local
     private Answer GetStupidWinningPossibilities()
     {
-        var delta = _longRace.Time * _longRace.Time - 4 * _longRace.DistanceRecord;
-
         for (var startTime = (long)0; startTime <= _longRace.Time; startTime++)
         {
             var distance = (_longRace.Time - startTime) * startTime;

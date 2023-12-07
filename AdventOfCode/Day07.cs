@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using MoreLinq;
 
 namespace AdventOfCode;
@@ -136,13 +135,9 @@ public sealed class Day07 : BaseTestableDay
 
     private Answer CalculateWinnings()
     {
-        var cards = _input
+        return _input
             .Select(x => (x.OriginalHand, x.Bid))
-            .ToList();
-
-        cards.Sort();
-
-        return cards
+            .OrderBy(hands => hands)
             .Enumerate()
             .Select(x => (x.Index + 1) * x.Value.Bid)
             .Sum();
@@ -150,13 +145,9 @@ public sealed class Day07 : BaseTestableDay
 
     private Answer CalculateJackWinnings()
     {
-        var cards = _input
+        return _input
             .Select(x => (x.BestJokerHand, x.Bid))
-            .ToList();
-
-        cards.Sort(); // Smart C# sorting knows how to handle tuples, well done C#, you're almost as sugary as python!
-
-        return cards
+            .OrderBy(hands => hands)
             .Enumerate()
             .Select(x => (x.Index + 1) * x.Value.Bid)
             .Sum();
