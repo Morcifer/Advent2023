@@ -60,13 +60,14 @@ public sealed class Day07 : BaseTestableDay
         {
             var counts = _handTypeCards.GroupBy(c => c).Select(g => g.Count()).ToList();
 
-            return counts.Count switch
+            return counts.Max() switch
             {
-                1 => HandType.FiveOfAKind,
-                2 => counts.Contains(4) ? HandType.FourOfAKind : HandType.FullHouse,
-                3 => counts.Contains(3) ? HandType.ThreeOfAKind : HandType.TwoPairs,
-                4 => HandType.OnePair,
-                _ => HandType.HighCard,
+                5 => HandType.FiveOfAKind,
+                4 => HandType.FourOfAKind,
+                3 => counts.Contains(2) ? HandType.FullHouse : HandType.ThreeOfAKind,
+                2 => counts.Count == 3 ? HandType.TwoPairs : HandType.OnePair,
+                1 => HandType.HighCard,
+                _ => throw new ArgumentException("What did you do?!"),
             };
         }
 
