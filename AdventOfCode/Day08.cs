@@ -60,9 +60,10 @@ public sealed class Day08 : BaseTestableDay
     {
         var startingPoints = _forks.Keys.Where(node => node[^1] == 'A').ToList();
 
-        // Fun assumption that is apparently correct - each starting point will only ever end up in a single Z in their entire life.
+        // Fun assumptions that are apparently correct:
+        // Each starting point will only ever end up in a single Z in their entire life.
+        // And not only that, there's actually no offset to get there - if it gets to Z at time T, it will get to Z at every multiple of T.
         var timeToFirstZ = new Dictionary<string, long>();
-        var periodicityToZ = new Dictionary<string, long>();
 
         foreach (var startingPoint in startingPoints)
         {
@@ -73,15 +74,8 @@ public sealed class Day08 : BaseTestableDay
             {
                 if (current[^1] == 'Z')
                 {
-                    if (!timeToFirstZ.ContainsKey(startingPoint))
-                    {
-                        timeToFirstZ[startingPoint] = steps;
-                    }
-                    else
-                    {
-                        periodicityToZ[startingPoint] = steps - timeToFirstZ[startingPoint];
-                        break;
-                    }
+                    timeToFirstZ[startingPoint] = steps;
+                    break;
                 }
 
                 current = _forks[current][step];
@@ -89,27 +83,12 @@ public sealed class Day08 : BaseTestableDay
             }
         }
 
-        var numberOfInstructionsPeriodicity = periodicityToZ
+        var numberOfInstructionsPeriodicity = timeToFirstZ
             .Values
             .Select(v => v / _directionIndex.Count)
             .Aggregate((long)1, (x, y) => x * y); // .Product(). Should extract this at some point.
 
-        var actualPeriodicity = numberOfInstructionsPeriodicity * _directionIndex.Count;
-
-        for (var multiple = (long)1; multiple < long.MaxValue; multiple++)
-        {
-            for (var smallStartTime = 0; smallStartTime < _directionIndex.Count; smallStartTime++)
-            {
-                var realTime = smallStartTime + (multiple * actualPeriodicity);
-
-                if (startingPoints.All(startingPoint => (realTime - timeToFirstZ[startingPoint]) % periodicityToZ[startingPoint] == 0))
-                {
-                    return realTime;
-                }
-            }
-        }
-
-        return -1;
+        return numberOfInstructionsPeriodicity * _directionIndex.Count;
     }
 
     public override ValueTask<string> Solve_1() => CalculateSteps();
