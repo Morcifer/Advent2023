@@ -86,7 +86,7 @@ public sealed class Day08 : BaseTestableDay
         var numberOfInstructionsPeriodicity = timeToFirstZ
             .Values
             .Select(v => v / _directionIndex.Count)
-            .Aggregate((long)1, (x, y) => x * y); // .Product(). Should extract this at some point.
+            .Product();
 
         return numberOfInstructionsPeriodicity * _directionIndex.Count;
     }

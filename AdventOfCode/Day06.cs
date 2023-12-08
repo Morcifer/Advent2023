@@ -30,7 +30,7 @@ public sealed class Day06 : BaseTestableDay
                     .Range(0, race.Time + 1)
                     .Count(time => (race.Time - time) * time > race.DistanceRecord)
             )
-            .Aggregate(1, (x, y) => x * y); // .Product(). Should extract this at some point.
+            .Product();
     }
 
     // ReSharper disable once UnusedMember.Local

@@ -22,6 +22,16 @@ public static class Utilities
         return enumerable.Select((v, i) => (i, v)); // Sure would have been nicer if I could just do this in the foreach directly...
     }
 
+    public static int Product(this IEnumerable<int> source)
+    {
+        return source.Aggregate((int)1, (x, y) => x * y);
+    }
+
+    public static long Product(this IEnumerable<long> source)
+    {
+        return source.Aggregate((long)1, (x, y) => x * y);
+    }
+
     public static IEnumerable<List<string>> Cluster(this IEnumerable<string> text)
     {
         var cluster = new List<string>();
