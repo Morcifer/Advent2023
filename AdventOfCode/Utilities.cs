@@ -24,7 +24,7 @@ public static class Utilities
 
     public static int Product(this IEnumerable<int> source)
     {
-        return source.Aggregate((int)1, (x, y) => x * y);
+        return source.Aggregate(1, (x, y) => x * y);
     }
 
     public static long Product(this IEnumerable<long> source)
