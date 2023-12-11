@@ -62,7 +62,7 @@ public sealed class Day10 : BaseTestableDay
                 'J' => previousPoint != (cRow - 1, cColumn) ? (cRow - 1, cColumn) : (cRow, cColumn - 1), // Up or left
                 '7' => previousPoint != (cRow + 1, cColumn) ? (cRow + 1, cColumn) : (cRow, cColumn - 1), // Down or left
                 'F' => previousPoint != (cRow + 1, cColumn) ? (cRow + 1, cColumn) : (cRow, cColumn + 1), // Down or right
-                _ => throw new ArgumentOutOfRangeException("Why."),
+                _ => throw new ArgumentOutOfRangeException($"You shouldn't be here!"),
             };
 
             previousPoint = currentPoint;
@@ -81,72 +81,81 @@ public sealed class Day10 : BaseTestableDay
     private Answer CalculatePart2Answer()
     {
         var path = CalculateLoop();
-        path.Add(path[0]); // Close the loop, because you'll need it later...
 
+        // Clean up the input to only contain the path.
         var pathSet = path.ToHashSet();
-
         var cleanInput = new List<string>();
 
         foreach (var (rowIndex, row) in _input.Enumerate())
         {
             var toPrint = row.Enumerate().Select(x => pathSet.Contains((rowIndex, x.Index)) ? x.Value : '.').ToList();
             cleanInput.Add(string.Join("", toPrint));
-            //Console.WriteLine(_cleanInput[^1]);
         }
 
-        var points = cleanInput
-            .SelectMany((row, rowIndex) => row.Enumerate().Where(column => column.Value == '.').Select(column => (rowIndex, column.Index)))
-            .ToList();
-
-        var inLoop = points.Where(p => IsInPolygon(p, path)).ToHashSet();
-
-        //var _testInput = new List<string>();
-
-        //foreach (var (rowIndex, row) in _cleanInput.Enumerate())
-        //{
-        //    var toPrint = row
-        //        .Enumerate()
-        //        .Select(x => pathSet.Contains((rowIndex, x.Index)) ? x.Value : (inLoop.Contains((rowIndex, x.Index)) ? 'I' : 'O'))
-        //        .ToList();
-
-        //    _testInput.Add(string.Join("", toPrint));
-        //    Console.WriteLine(_testInput[^1]);
-        //}
-        //
-        //Console.WriteLine();
-
-        return inLoop.Count;
-    }
-
-    private bool IsInPolygon((int, int) point, List<(int, int)> polygon)
-    {
-        bool result = false;
-        var a = polygon.Last();
-
-        foreach (var b in polygon)
+        // Now expand the map, so that you can squeeze between pipes.
+        var oneToThreeConversions = new Dictionary<char, string>()
         {
-            if ((b.Item2 == point.Item2) && (b.Item1 == point.Item1))
-                return true;
+            // ReSharper disable once StringLiteralTypo
+            { 'S', "SSSSSSSSS" },
+            { '.', "........." },
+            { '|', ".|..|..|." },
+            { '-', "...---..." },
+            { 'L', ".|..L-..." },
+            { 'J', ".|.-J...." },
+            { '7', "...-7..|." },
+            { 'F', "....F-.|." },
+        };
 
-            if ((b.Item1 == a.Item1) && (point.Item1 == a.Item1))
+        var expandedInput = new List<string>();
+
+        foreach (var (rowIndex, row) in cleanInput.Enumerate())
+        {
+            expandedInput.AddRange(new List<string>() { "", "", "" });
+
+            foreach (var c in row)
             {
-                if ((a.Item2 <= point.Item2) && (point.Item2 <= b.Item2))
-                    return true;
+                var conversion = oneToThreeConversions[c];
 
-                if ((b.Item2 <= point.Item2) && (point.Item2 <= a.Item2))
-                    return true;
+                expandedInput[3 * rowIndex] += conversion[..3];
+                expandedInput[(3 * rowIndex) + 1] += conversion[3..6];
+                expandedInput[(3 * rowIndex) + 2] += conversion[6..];
             }
-
-            if ((b.Item1 < point.Item1) && (a.Item1 >= point.Item1) || (a.Item1 < point.Item1) && (b.Item1 >= point.Item1))
-            {
-                if (b.Item2 + (point.Item1 - b.Item1) / (a.Item1 - b.Item1) * (a.Item2 - b.Item2) <= point.Item2)
-                    result = !result;
-            }
-
-            a = b;
         }
 
-        return result;
+        // Now that you can squeeze between pipes, flood-fill expandedInput.
+        var queue = new Queue<(int Row, int Column)>();
+        queue.Enqueue((0, 0));
+
+        while (queue.Count > 0)
+        {
+            var (cRow, cColumn) = queue.Dequeue();
+
+            if (cRow < 0 || cRow >= expandedInput.Count || cColumn < 0 || cColumn >= expandedInput[0].Length)
+            {
+                continue;
+            }
+
+            if (expandedInput[cRow][cColumn] != '.')
+            {
+                continue;
+            }
+
+            expandedInput[cRow] = expandedInput[cRow][..cColumn] + 'O' + expandedInput[cRow][(cColumn + 1)..];
+
+            queue.Enqueue((Row: cRow, cColumn + 1));
+            queue.Enqueue((Row: cRow, cColumn - 1));
+            queue.Enqueue((cRow + 1, Column: cColumn));
+            queue.Enqueue((cRow - 1, Column: cColumn));
+        }
+
+        // And now figure out which of the original points are still "inside" (the rest were marked as 'O' in the expanded map).
+        return cleanInput
+            .SelectMany(
+                (row, rowIndex) => row
+                    .Enumerate()
+                    .Where(column => column.Value == '.')
+                    .Select(column => (Row: rowIndex, Column: column.Index)))
+            .Count(point => expandedInput[(3 * point.Row) + 1][(3 * point.Column) + 1] == '.');
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
