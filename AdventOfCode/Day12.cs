@@ -1,4 +1,3 @@
-using System.Linq;
 using MoreLinq;
 
 namespace AdventOfCode;
@@ -27,109 +26,16 @@ public sealed class Day12 : BaseTestableDay
         return (split[0], split[1].Split(",").Select(int.Parse).ToList());
     }
 
-    internal bool IsValidCount(string springs, List<int> counts)
-    {
-        // TODO: This is ugly, do better. (by counting, then comparing).
-        var countIndex = 0;
-        var currentCount = 0;
-
-        foreach (var spring in springs)
-        {
-            if (spring == '#')
-            {
-                currentCount += 1;
-                continue;
-            }
-
-
-            if (currentCount == 0)
-            {
-                continue;
-            }
-
-            if (countIndex >= counts.Count || counts[countIndex] != currentCount)
-            {
-                return false;
-            }
-
-            countIndex += 1;
-            currentCount = 0;
-        }
-
-        if (currentCount == 0)
-        {
-            return countIndex == counts.Count;
-        }
-
-        return countIndex == counts.Count - 1 && counts[countIndex] == currentCount;
-    }
-
-
-    internal bool IsValid(List<int> damaged, List<int> counts)
-    {
-        var temp = damaged
-            .OrderBy(x => x)
-            .GroupConsecutive()
-            .ToList();
-
-        var orderedDamaged = damaged
-            .OrderBy(x => x)
-            .GroupConsecutive()
-            .Select(g => g.Count())
-            .ToList();
-
-        var temptemp = orderedDamaged.SequenceEqual(counts);
-
-        return orderedDamaged.SequenceEqual(counts);
-    }
-
-    internal int CalculateOptions(string springs, List<int> counts)
-    {
-        // TODO: This is also slow and stupid. A DFS will be faster because you can cut branches!
-        var questions = springs.Enumerate().Where(x => x.Value == '?').Select(x => x.Index).ToList();
-        var questionsSet = questions.ToHashSet();
-
-        return questions
-            .Subsets()
-            .Select(operationals => operationals.ToHashSet())
-            .Select(operationals => string.Join(
-                "",
-                springs
-                    .Enumerate()
-                    .Select(
-                        x => questionsSet.Contains(x.Index)
-                            ? (operationals.Contains(x.Index) ? '.' : '#')
-                            : x.Value
-                    )
-                )
-            )
-            .Count(s => IsValidCount(s, counts));
-    }
-
-    internal int CalculateOptionsFaster(string springs, List<int> counts)
-    {
-        Console.WriteLine($"Evaluating {springs}");
-        var questions = springs.Enumerate().Where(x => x.Value == '?').Select(x => x.Index).ToList();
-        var damaged = springs.Enumerate().Where(x => x.Value == '#').Select(x => x.Index).ToList();
-
-        return questions
-            .Subsets()
-            .Select(otherDamaged => damaged.ToList().Concat(otherDamaged).ToList())
-            .Count(allDamaged => IsValid(allDamaged, counts));
-    }
-
-    internal long CalculateOptionsFastestCached(
+    internal long CalculateOptionsCached(
         string springs,
         int countIndex,
-        List<int> counts, // Can change these to be the counts index, I guess.
+        List<int> counts,
         Dictionary<(string, int), long> cache
     )
     {
-        //Console.WriteLine($"Evaluating {springs} with {string.Join(",", counts.Select(n => n.ToString()))}");
         var key = (springs, countIndex);
-        long result;
 
-        if (cache.TryGetValue(key, out result))
+        if (cache.TryGetValue(key, out var result))
         {
             return result;
         }
@@ -139,67 +45,69 @@ public sealed class Day12 : BaseTestableDay
             return countIndex == counts.Count ? 1 : 0;
         }
 
-        if (springs[0] == '#')
+        switch (springs[0])
         {
-            if (countIndex == counts.Count || springs.Length < counts[countIndex] || springs[..counts[countIndex]].Any(c => c != '#' && c != '?'))
-            {
-                result = 0;
-            }
-            else if (springs.Length == counts[countIndex])
-            {
-                result = counts.Count == countIndex + 1 ? 1 : 0;
-            }
-            else // Yuck, this one sucks, because it depends on the next one.
-            {
-                if (springs[counts[countIndex]] == '#')
+            case '.':
+                result = CalculateOptionsCached(springs[1..], countIndex, counts, cache);
+                break;
+            case '?':
+                result = CalculateOptionsCached('#' + springs[1..], countIndex, counts, cache) +
+                         CalculateOptionsCached('.' + springs[1..], countIndex, counts, cache);
+                break;
+            case '#':
+                if (countIndex == counts.Count) // We ran out of groups)
+                {
+                    return 0;
+                }
+
+                var count = counts[countIndex];
+
+                // Either the substring is too short, or it doesn't match the group requirement
+                if (springs.Length < count || springs[..count].Any(c => c == '.'))
                 {
                     result = 0;
-                } else // For '?' and '.', only '.' is allowed.
-                {
-                    result = CalculateOptionsFastestCached(springs[(counts[countIndex] + 1)..], countIndex + 1, counts, cache);
+                    break;
                 }
-            }
-        }
-        else if (springs[0] == '?')
-        {
-            result = CalculateOptionsFastestCached('#' + springs[1..], countIndex, counts, cache) + CalculateOptionsFastestCached('.' + springs[1..], countIndex, counts, cache);
-        }
-        else
-        {
-            result = CalculateOptionsFastestCached(springs[1..], countIndex, counts, cache);
+
+                if (springs.Length == count) // This is the end of the string, and it's consistent with the group
+                {
+                    result = counts.Count == countIndex + 1 ? 1 : 0;
+                    break;
+                }
+
+                if (springs[count] == '#') // The value after the group is ALSO #. That's a problem.
+                {
+                    result = 0;
+                    break;
+                }
+
+                // The value after the group is either a '.' (in which case we can skip it)
+                // or '?' (in which case only the '.' value is valid and we can skip it).
+                result = CalculateOptionsCached(springs[(count + 1)..], countIndex + 1, counts, cache);
+                break;
         }
 
         cache[key] = result;
-        //Console.WriteLine($"{springs} evaluated to {result}");
         return result;
     }
 
-    internal long CalculateOptionsFastest(string springs, List<int> counts)
+    internal long CalculateOptions(string springs, List<int> counts)
     {
-        Console.WriteLine($"Evaluating {springs}");
         var cache = new Dictionary<(string, int), long>();
 
-        var result = CalculateOptionsFastestCached(springs, 0, counts, cache);
-        //Console.WriteLine($"{springs} evaluated to {result}");
+        var result = CalculateOptionsCached(springs, 0, counts, cache);
 
         return result;
     }
 
     private Answer CalculatePart1Answer()
     {
-        Console.WriteLine($"Evaluating Part 1");
-        return _input.Select(x => CalculateOptionsFastest(x.Item1, x.Item2)).Sum();
+        return _input.Select(x => CalculateOptions(x.Item1, x.Item2)).Sum();
     }
 
     private Answer CalculatePart2Answer()
     {
-        //if (RunMode == RunMode.Real)
-        //{
-        //    return -1;
-        //}
-        
-        Console.WriteLine($"Evaluating Part 2");
-        return _input.Select(x => CalculateOptionsFastest(
+        return _input.Select(x => CalculateOptions(
             string.Join("?", Enumerable.Range(0, 5).Select(i => x.Item1)),
             x.Item2.Repeat(5).ToList())
         ).Sum();
