@@ -53,6 +53,7 @@ public sealed class Day12 : BaseTestableDay
             case '?':
                 result = CalculateOptionsCached('#' + springs[1..], countIndex, counts, cache) +
                          CalculateOptionsCached('.' + springs[1..], countIndex, counts, cache);
+
                 break;
             case '#':
                 if (countIndex == counts.Count) // We ran out of groups)
@@ -107,10 +108,12 @@ public sealed class Day12 : BaseTestableDay
 
     private Answer CalculatePart2Answer()
     {
-        return _input.Select(x => CalculateOptions(
-            string.Join("?", Enumerable.Range(0, 5).Select(i => x.Item1)),
-            x.Item2.Repeat(5).ToList())
-        ).Sum();
+        return _input.Select(
+                x => CalculateOptions(
+                    string.Join("?", Enumerable.Range(0, 5).Select(_ => x.Item1)),
+                    x.Item2.Repeat(5).ToList())
+            )
+            .Sum();
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
