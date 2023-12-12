@@ -120,12 +120,13 @@ public sealed class Day12 : BaseTestableDay
 
     internal long CalculateOptionsFastestCached(
         string springs,
+        int countIndex,
         List<int> counts, // Can change these to be the counts index, I guess.
-        Dictionary<(string, List<int>), long> cache
+        Dictionary<(string, int), long> cache
     )
     {
         //Console.WriteLine($"Evaluating {springs} with {string.Join(",", counts.Select(n => n.ToString()))}");
-        var key = (springs, counts);
+        var key = (springs, countIndex);
         long result;
 
         if (cache.TryGetValue(key, out result))
@@ -135,37 +136,37 @@ public sealed class Day12 : BaseTestableDay
 
         if (springs == "")
         {
-            return counts.Count == 0 ? 1 : 0;
+            return countIndex == counts.Count ? 1 : 0;
         }
 
         if (springs[0] == '#')
         {
-            if (counts.Count == 0 || springs.Length < counts[0] || springs[..counts[0]].Any(c => c != '#' && c != '?'))
+            if (countIndex == counts.Count || springs.Length < counts[countIndex] || springs[..counts[countIndex]].Any(c => c != '#' && c != '?'))
             {
                 result = 0;
             }
-            else if (springs.Length == counts[0])
+            else if (springs.Length == counts[countIndex])
             {
-                result = counts.Count == 1 ? 1 : 0;
+                result = counts.Count == countIndex + 1 ? 1 : 0;
             }
             else // Yuck, this one sucks, because it depends on the next one.
             {
-                if (springs[counts[0]] == '#')
+                if (springs[counts[countIndex]] == '#')
                 {
                     result = 0;
                 } else // For '?' and '.', only '.' is allowed.
                 {
-                    result = CalculateOptionsFastestCached(springs[(counts[0] + 1)..], counts.Skip(1).ToList(), cache);
+                    result = CalculateOptionsFastestCached(springs[(counts[countIndex] + 1)..], countIndex + 1, counts, cache);
                 }
             }
         }
         else if (springs[0] == '?')
         {
-            result = CalculateOptionsFastestCached('#' + springs[1..], counts, cache) + CalculateOptionsFastestCached('.' + springs[1..], counts, cache);
+            result = CalculateOptionsFastestCached('#' + springs[1..], countIndex, counts, cache) + CalculateOptionsFastestCached('.' + springs[1..], countIndex, counts, cache);
         }
         else
         {
-            result = CalculateOptionsFastestCached(springs[1..], counts, cache);
+            result = CalculateOptionsFastestCached(springs[1..], countIndex, counts, cache);
         }
 
         cache[key] = result;
@@ -176,9 +177,9 @@ public sealed class Day12 : BaseTestableDay
     internal long CalculateOptionsFastest(string springs, List<int> counts)
     {
         Console.WriteLine($"Evaluating {springs}");
-        var cache = new Dictionary<(string, List<int>), long>();
+        var cache = new Dictionary<(string, int), long>();
 
-        var result = CalculateOptionsFastestCached(springs, counts, cache);
+        var result = CalculateOptionsFastestCached(springs, 0, counts, cache);
         //Console.WriteLine($"{springs} evaluated to {result}");
 
         return result;
@@ -192,7 +193,11 @@ public sealed class Day12 : BaseTestableDay
 
     private Answer CalculatePart2Answer()
     {
-        return -1;
+        //if (RunMode == RunMode.Real)
+        //{
+        //    return -1;
+        //}
+        
         Console.WriteLine($"Evaluating Part 2");
         return _input.Select(x => CalculateOptionsFastest(
             string.Join("?", Enumerable.Range(0, 5).Select(i => x.Item1)),
