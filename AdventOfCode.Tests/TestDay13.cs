@@ -1,11 +1,11 @@
 namespace AdventOfCode.Tests;
 
-public class TestDay12
+public class TestDay13
 {
     [Theory]
-    [InlineData(typeof(Day12), RunMode.Test, "21", "525152")]
-    [InlineData(typeof(Day12), RunMode.Real, "6871", "2043098029844")]
-    public async Task Day12_Regression(Type type, RunMode runMode, string expectedPart1, string expectedPart2)
+    [InlineData(typeof(Day13), RunMode.Test, "405", "400")]
+    [InlineData(typeof(Day13), RunMode.Real, "31956", "37617")]
+    public async Task Day13_Regression(Type type, RunMode runMode, string expectedPart1, string expectedPart2)
     {
         if (Activator.CreateInstance(type, runMode) is BaseTestableDay instance)
         {
