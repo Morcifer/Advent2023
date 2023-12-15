@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Text;
 
 namespace AdventOfCode;
@@ -33,7 +34,10 @@ public sealed class Day15 : BaseTestableDay
 
     private Answer CalculatePart2Answer()
     {
-        var boxes = Enumerable.Range(0, 256).Select(x => new List<(string Label, int Focus)>()).ToList();
+        var boxes = Enumerable
+            .Range(0, 256)
+            .Select(_ => new OrderedDictionary()) // OrderedDictionary<string, int>
+            .ToList();
 
         foreach (var input in _input)
         {
@@ -42,25 +46,26 @@ public sealed class Day15 : BaseTestableDay
             var labelHash = Hash(label);
 
             var box = boxes[labelHash];
-            var labelInBoxIndex = box.FindIndex(x => x.Label == label);
-
             int.TryParse(input[(operationIndex + 1)..], out var focus);
 
             switch (input[operationIndex])
             {
-                case '-' when labelInBoxIndex != -1:
-                    box.RemoveAt(labelInBoxIndex);
+                case '-':
+                    box.Remove(label);
                     break;
-                case '=' when labelInBoxIndex == -1:
-                    box.Add((label, focus));
-                    break;
-                case '=': // In this case, labelInBoxIndex is not -1
-                    box[labelInBoxIndex] = (label, focus);
+                case '=':
+                    box[label] = focus;
                     break;
             }
         }
 
-        return boxes.Enumerate().SelectMany(x => x.Value.Enumerate().Select(y => (x.Index + 1) * (y.Index + 1) * y.Value.Focus)).Sum();
+        return boxes
+            .SelectMany(
+                (box, boxNumber) => box
+                    .Values
+                    .Cast<int>() // What a weird thing OrderedDictionary is...
+                    .Select((focus, lensNumber) => (boxNumber + 1) * (lensNumber + 1) * focus))
+            .Sum();
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
