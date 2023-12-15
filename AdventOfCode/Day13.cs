@@ -138,5 +138,5 @@ public sealed class Day13 : BaseTestableDay
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
 
-    public override ValueTask<string> Solve_2() => CalculatePart2Answer(); // 50892 is too high, 27950 is too high.
+    public override ValueTask<string> Solve_2() => CalculatePart2Answer();
 }
