@@ -8,6 +8,11 @@ public enum Direction
     Up,
 }
 
+public record DirectionalPoint(int Row, int Column, Direction Direction)
+{
+    public static implicit operator DirectionalPoint((int, int, Direction) x) => new(x.Item1, x.Item2, x.Item3);
+};
+
 public sealed class Day16 : BaseTestableDay
 {
     private readonly List<string> _input;
@@ -16,45 +21,48 @@ public sealed class Day16 : BaseTestableDay
     {
     }
 
-    internal ((int Row, int Column), Direction Direction) MoveStraight((int Row, int Column) point, Direction direction)
+    internal DirectionalPoint MoveStraight(int row, int column, Direction direction)
     {
         return direction switch
         {
-            Direction.Right => ((point.Row, point.Column + 1), direction),
-            Direction.Down => ((point.Row + 1, point.Column), direction),
-            Direction.Left => ((point.Row, point.Column - 1), direction),
-            Direction.Up => ((point.Row - 1, point.Column), direction),
+            Direction.Right => (row, column + 1, direction),
+            Direction.Down => (row + 1, column, direction),
+            Direction.Left => (row, column - 1, direction),
+            Direction.Up => (row - 1, column, direction),
+            _ => throw new ArgumentException("Rust is better than C# at this"),
         };
     }
 
-    internal List<((int Row, int Column), Direction Direction)> Move((int Row, int Column) point, Direction direction)
+    internal List<DirectionalPoint> Move(DirectionalPoint directionalPoint)
     {
-        var result = (direction, _input[point.Row][point.Column]) switch
+        var (row, column, direction) = directionalPoint;
+
+        var result = (direction, _input[row][column]) switch
         {
-            (Direction.Right, '.') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, direction) },
-            (Direction.Right, '|') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up), MoveStraight(point, Direction.Down) },
-            (Direction.Right, '-') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, direction) },
-            (Direction.Right, '/') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up) },
-            (Direction.Right, '\\') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Down) },
-            (Direction.Down, '.') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Down) },
-            (Direction.Down, '|') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Down) },
-            (Direction.Down, '-') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left), MoveStraight(point, Direction.Right) },
-            (Direction.Down, '/') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left) },
-            (Direction.Down, '\\') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Right) },
-            (Direction.Left, '.') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left) },
-            (Direction.Left, '|') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up), MoveStraight(point, Direction.Down) },
-            (Direction.Left, '-') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left) },
-            (Direction.Left, '/') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Down) },
-            (Direction.Left, '\\') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up) },
-            (Direction.Up, '.') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up) },
-            (Direction.Up, '|') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Up) },
-            (Direction.Up, '-') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left), MoveStraight(point, Direction.Right) },
-            (Direction.Up, '/') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Right) },
-            (Direction.Up, '\\') => new List<((int Row, int Column), Direction Direction)> { MoveStraight(point, Direction.Left) },
-            _ => throw new NotImplementedException(),
+            (Direction.Right, '.') => new List<DirectionalPoint> { MoveStraight(row, column, direction) },
+            (Direction.Right, '|') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up), MoveStraight(row, column, Direction.Down), },
+            (Direction.Right, '-') => new List<DirectionalPoint> { MoveStraight(row, column, direction) },
+            (Direction.Right, '/') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up) },
+            (Direction.Right, '\\') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Down) },
+            (Direction.Down, '.') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Down) },
+            (Direction.Down, '|') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Down) },
+            (Direction.Down, '-') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left), MoveStraight(row, column, Direction.Right), },
+            (Direction.Down, '/') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left) },
+            (Direction.Down, '\\') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Right) },
+            (Direction.Left, '.') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left) },
+            (Direction.Left, '|') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up), MoveStraight(row, column, Direction.Down), },
+            (Direction.Left, '-') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left) },
+            (Direction.Left, '/') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Down) },
+            (Direction.Left, '\\') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up) },
+            (Direction.Up, '.') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up) },
+            (Direction.Up, '|') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Up) },
+            (Direction.Up, '-') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left), MoveStraight(row, column, Direction.Right), },
+            (Direction.Up, '/') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Right) },
+            (Direction.Up, '\\') => new List<DirectionalPoint> { MoveStraight(row, column, Direction.Left) },
+            _ => throw new ArgumentException("You shouldn't be here, what did you do?"),
         };
 
-        return result.Where(x => 0 <= x.Item1.Row && x.Item1.Row < _input.Count && 0 <= x.Item1.Column && x.Item1.Column < _input[0].Length).ToList();
+        return result.Where(x => 0 <= x.Row && x.Row < _input.Count && 0 <= x.Column && x.Column < _input[0].Length).ToList();
     }
 
     public Day16(RunMode runMode)
@@ -66,43 +74,49 @@ public sealed class Day16 : BaseTestableDay
             .ToList();
     }
 
-    private int CalculateEnergized((int Row, int Column) point, Direction direction)
+    private int CalculateEnergized(DirectionalPoint directionalPoint)
     {
-        Console.WriteLine($"{point}, {direction}");
-
-        var beams = new List<((int Row, int Column), Direction Direction)> { (point, direction) };
-
-        var energized = new HashSet<(int, int)> { point };
-
+        var beams = new List<DirectionalPoint> { directionalPoint };
         var explored = beams.ToHashSet();
 
         while (beams.Count > 0)
         {
-            beams = beams.SelectMany(b => Move(b.Item1, b.Direction)).Where(x => !explored.Contains(x)).Distinct().ToList();
+            beams = beams
+                .SelectMany(b => Move((b.Row, b.Column, b.Direction)))
+                .Where(x => !explored.Contains(x))
+                .Distinct()
+                .ToList();
+
             explored.UnionWith(beams);
-            energized.UnionWith(beams.Select(b => b.Item1));
         }
 
-        return energized.Count;
+        return explored.Select(x => (x.Row, x.Column)).Distinct().Count();
     }
 
     private Answer CalculatePart1Answer()
     {
-        return CalculateEnergized((0, 0), Direction.Right);
+        return CalculateEnergized((0, 0, Direction.Right));
     }
 
     private Answer CalculatePart2Answer()
     {
-        var directions = new List<Direction> { Direction.Right, Direction.Down, Direction.Left, Direction.Up, };
+        var directions = new List<Direction>
+        {
+            Direction.Right, Direction.Down, Direction.Left, Direction.Up,
+        };
 
         return Enumerable.Range(0, _input.Count)
-            .Select(start => directions.SelectMany(direction => new List<int>()
-            {
-                CalculateEnergized((start, 0), direction),
-                CalculateEnergized((start, _input.Count - 1), direction),
-                CalculateEnergized((0, start), direction),
-                CalculateEnergized((_input.Count - 1, start), direction),
-            }).Max())
+            .SelectMany(
+                start => directions
+                    .SelectMany(
+                        direction => new List<int>
+                        {
+                            CalculateEnergized((start, 0, direction)),
+                            CalculateEnergized((start, _input.Count - 1, direction)),
+                            CalculateEnergized((0, start, direction)),
+                            CalculateEnergized((_input.Count - 1, start, direction)),
+                        }
+                    ))
             .Max();
     }
 
