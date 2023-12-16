@@ -72,16 +72,15 @@ public sealed class Day16 : BaseTestableDay
 
         var beams = new List<((int Row, int Column), Direction Direction)> { (point, direction) };
 
-        var energized = new HashSet<(int, int)>();
-        energized.Add(point);
+        var energized = new HashSet<(int, int)> { point };
 
-        var count = 1000; // Find better way to trim!
+        var explored = beams.ToHashSet();
 
-        while (beams.Count > 0 && count > 0)
+        while (beams.Count > 0)
         {
-            beams = beams.SelectMany(b => Move(b.Item1, b.Direction)).Distinct().ToList();
+            beams = beams.SelectMany(b => Move(b.Item1, b.Direction)).Where(x => !explored.Contains(x)).Distinct().ToList();
+            explored.UnionWith(beams);
             energized.UnionWith(beams.Select(b => b.Item1));
-            count--;
         }
 
         return energized.Count;
