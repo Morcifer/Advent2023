@@ -1,4 +1,5 @@
 using System.Globalization;
+using MoreLinq;
 
 namespace AdventOfCode;
 
@@ -6,7 +7,7 @@ public sealed class Day18 : BaseTestableDay
 {
     private readonly List<(char Direction, int Steps, string Hex)> _input;
 
-    public Day18() : this(RunMode.Test)
+    public Day18() : this(RunMode.Real)
     {
     }
 
@@ -26,55 +27,39 @@ public sealed class Day18 : BaseTestableDay
         return (split[0][0], int.Parse(split[1]), split[2][1..^1]);
     }
 
-    private Answer CalculatePart1Answer()
+    private Answer DigBoysDig(List<(char Direction, int Steps)> moves)
     {
-        var colors = new Dictionary<(int Row, int Column), string>();
-
         var current = (Row: 0, Column: 0);
-        colors[current] = "#FFFFFF";
+        var points = new List<(long Row, long Column)>() { current };
 
-        foreach (var move in _input)
+        foreach (var move in moves)
         {
-            foreach (var _ in Enumerable.Range(1, move.Steps))
+            current = move.Direction switch
             {
-                current = move.Direction switch
-                {
-                    'R' => (current.Row, current.Column + 1),
-                    'D' => (current.Row + 1, current.Column),
-                    'L' => (current.Row, current.Column - 1),
-                    'U' => (current.Row - 1, current.Column),
-                    _ => throw new ArgumentException("Are you sure you're in the right place?"),
-                };
+                'R' => (current.Row, current.Column + move.Steps),
+                'D' => (current.Row + move.Steps, current.Column),
+                'L' => (current.Row, current.Column - move.Steps),
+                'U' => (current.Row - move.Steps, current.Column),
+                _ => throw new ArgumentException("Are you sure you're in the right place?"),
+            };
 
-                colors[current] = move.Hex;
-            }
+            points.Add(current);
         }
 
-        // Now you flood-fill again, but this time on the inside.
-        var queue = new Queue<(int Row, int Column)>();
-        queue.Enqueue((1, 1));
+        // Now we shoe-lace, like I should have on day 10 but was too lazy to understand the formula.
+        var plus = points.Pairwise((p1, p2) => p1.Column * p2.Row).Sum();
+        var minus = points.Pairwise((p1, p2) => p1.Row * p2.Column).Sum();
+        var perimeter = points.Pairwise((p1, p2) => Math.Abs(p1.Row - p2.Row) + Math.Abs(p1.Column - p2.Column)).Sum();
 
-        while (queue.Count > 0)
-        {
-            var (cRow, cColumn) = queue.Dequeue();
-
-            if (colors.ContainsKey((cRow, cColumn)))
-            {
-                continue;
-            }
-
-            colors[(cRow, cColumn)] = "#FFFFFF";
-
-            queue.Enqueue((Row: cRow, cColumn + 1));
-            queue.Enqueue((Row: cRow, cColumn - 1));
-            queue.Enqueue((cRow + 1, Column: cColumn));
-            queue.Enqueue((cRow - 1, Column: cColumn));
-        }
-
-        return colors.Count;
+        return (plus - minus + perimeter) / 2 + 1;
     }
 
-    private (char, int) ConvertHex(string text)
+    private Answer CalculatePart1Answer()
+    {
+        return DigBoysDig(_input.Select(x => (x.Direction, x.Steps)).ToList());
+    }
+
+    private (char Direction, int Steps) ConvertHex(string text)
     {
         var direction = text[^1] switch
         {
@@ -93,8 +78,7 @@ public sealed class Day18 : BaseTestableDay
 
     private Answer CalculatePart2Answer()
     {
-        var inputs = _input.Select(x => ConvertHex(x.Hex)).ToList();
-        return -1;
+        return DigBoysDig(_input.Select(x => ConvertHex(x.Hex)).ToList());
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
