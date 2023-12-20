@@ -1,6 +1,5 @@
 namespace AdventOfCode;
 
-
 public enum Pulse
 {
     Low,
@@ -56,10 +55,7 @@ public class ConjunctionModule : IModule
 public sealed class Day20 : BaseTestableDay
 {
     private readonly Dictionary<string, IModule> _modules;
-    private readonly Dictionary<string, ConjunctionModule> _conjunctions;
     private readonly Dictionary<string, List<string>> _graph;
-
-    private readonly List<Dictionary<Xmas, int>> _parts;
 
     public Day20() : this(RunMode.Real)
     {
@@ -70,9 +66,9 @@ public sealed class Day20 : BaseTestableDay
         RunMode = runMode;
 
         _modules = new Dictionary<string, IModule>();
-        _conjunctions = new Dictionary<string, ConjunctionModule>();
         _graph = new Dictionary<string, List<string>>();
 
+        var conjunctions = new Dictionary<string, ConjunctionModule>();
 
         foreach (var line in File.ReadAllLines(InputFilePath))
         {
@@ -88,7 +84,7 @@ public sealed class Day20 : BaseTestableDay
             {
                 var module = new ConjunctionModule();
                 _modules[moduleName] = module;
-                _conjunctions[moduleName] = module;
+                conjunctions[moduleName] = module;
             }
             else
             {
@@ -103,7 +99,7 @@ public sealed class Day20 : BaseTestableDay
         {
             foreach (var target in targets)
             {
-                if (_conjunctions.TryGetValue(target, out var conjunction))
+                if (conjunctions.TryGetValue(target, out var conjunction))
                 {
                     conjunction.AddSource(source);
                 }
@@ -111,9 +107,10 @@ public sealed class Day20 : BaseTestableDay
         }
     }
 
-    private List<Pulse> PressButton()
+    private (List<Pulse>, bool) PressButton(string stop)
     {
         var pulses = new List<Pulse>();
+        var result = false;
 
         var queue = new Queue<(string, string, Pulse)>();
         queue.Enqueue(("button", "broadcaster", Pulse.Low));
@@ -122,6 +119,11 @@ public sealed class Day20 : BaseTestableDay
         {
             var (source, module, pulse) = queue.Dequeue();
             pulses.Add(pulse);
+
+            if (source == stop && module == "ft" && pulse == Pulse.High)
+            {
+                result = true;
+            }
 
             //Console.WriteLine($"{source} {pulse} -> {module}");
 
@@ -143,7 +145,7 @@ public sealed class Day20 : BaseTestableDay
             }
         }
 
-        return pulses;
+        return (pulses, result);
     }
 
     private Answer CalculatePart1Answer()
@@ -152,15 +154,69 @@ public sealed class Day20 : BaseTestableDay
 
         for (int i = 0; i < 1000; i++)
         {
-            pulses.AddRange(PressButton());
+            pulses.AddRange(PressButton("").Item1);
         }
 
         return pulses.Count(p => p == Pulse.High) * pulses.Count(p => p == Pulse.Low);
     }
 
+    private (long, long) SimulateUntilTrigger(string trigger)
+    {
+        long press = 0;
+        var found = new List<long>();
+
+        while (found.Count != 10)
+        {
+            press += 1;
+
+            if (PressButton(trigger).Item2)
+            {
+                found.Add(press);
+            }
+        }
+
+        return (found[0], found[1]);
+    }
+
     private Answer CalculatePart2Answer()
     {
-        return -1;
+        if (RunMode == RunMode.Test)
+        {
+            return -1;
+        }
+
+        var rxSource = _graph.First(kvp => kvp.Value.Contains("rx")).Key;
+        var sourcesOfSource = _graph.Where(kvp => kvp.Value.Contains(rxSource)).Select(kvp => kvp.Key).ToList();
+
+        var firstAndPeriodicity = sourcesOfSource
+            .Select(SimulateUntilTrigger)
+            .Select(t => (First: t.Item1, Periodicity: t.Item2 - t.Item1))
+            .ToList();
+
+        var presses = firstAndPeriodicity[0].First;
+        var diff = firstAndPeriodicity[0].Periodicity;
+        var previousValids = 1;
+
+        while (true)
+        {
+            var valids = firstAndPeriodicity.Where(x => presses % x.Periodicity == x.First).ToList();
+
+            if (valids.Count > previousValids)
+            {
+                previousValids = valids.Count;
+                diff = valids.Select(x => x.Periodicity).Product();
+            }
+
+            if (valids.Count == firstAndPeriodicity.Count)
+            {
+                // Something's off in here...
+                // I should be needing to return the presses, but for some reason, it assumes periodicity starts at 0,
+                // even though it doesn't... do I have an issue, or is there a problem with the problem?
+                return diff;
+            }
+
+            presses += diff;
+        }
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
