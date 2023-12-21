@@ -1,3 +1,5 @@
+using MoreLinq;
+
 namespace AdventOfCode;
 
 
@@ -27,19 +29,48 @@ public sealed class Day21 : BaseTestableDay
 
     internal Answer RandomWalk(int steps)
     {
+        var period = _input.Count;
+
         var spot = _input
             .Enumerate()
-            .Select(x => (x.Index, x.Value.IndexOf('S')))
+            .Select(x => (Row: x.Index, Column: x.Value.IndexOf('S')))
             .First(x => x.Item2 != -1);
 
         var plots = new HashSet<(int Row, int Column)> { spot };
+        var memory = new List<long>();
+        var periodMemory = new List<long>();
+        var triangle = new List<List<long>>();
 
-        for (var step = 0; step < steps; step++)
+        var step = 0;
+
+        while (step < steps)
         {
-            if (step % 200 == 0)
+            memory.Add(plots.Count);
+
+            if (step % period == 0)
             {
-                Console.WriteLine($"I am in step {step} and have {plots.Count} plots");
+                periodMemory.Add(plots.Count);
+
+                if (periodMemory.Count >= 4)
+                {
+                    var temporaryTriangle = new List<List<long>>();
+                    var triangleValues = periodMemory.ToList();
+
+                    while (triangleValues.Any(x => x != 0))
+                    {
+                        temporaryTriangle.Add(triangleValues);
+                        triangleValues = triangleValues.Pairwise((x, y) => y - x).ToList();
+                    }
+
+                    if (temporaryTriangle[2][^2] == temporaryTriangle[2][^1]) // Polynomial increase means this will eventually happen.
+                    {
+                        triangle = temporaryTriangle;
+                        break;
+                    }
+                }
             }
+
+            step += 1;
 
             plots = plots
                 .SelectMany(spot => new List<(int Row, int Column)>
@@ -53,7 +84,28 @@ public sealed class Day21 : BaseTestableDay
                 .ToHashSet();
         }
 
-        return plots.Count;
+        // At a certain point things become periodic and the increase quadratic with the period.
+        // For the real one it's immediate. For the test one it actually takes a few periods longer.
+        if (step == steps)
+        {
+            return plots.Count;
+        }
+
+        // Find largest value in memory that is something +
+        var modulo = steps % period;
+        var extra = (step / period - 1) * period;
+
+        var result = memory[modulo + extra];
+        var diff = result - memory[modulo + extra - period];
+        var secondDiff = triangle[2][^1];
+
+        for (; step < steps; step += period)
+        {
+            diff += secondDiff;
+            result += diff;
+        }
+
+        return result;
     }
 
     private Answer CalculatePart1Answer()

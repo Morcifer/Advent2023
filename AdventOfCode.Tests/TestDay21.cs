@@ -24,7 +24,7 @@ public class TestDay21
 
     [Theory]
     [InlineData(typeof(Day21), RunMode.Test, "16", "16733044")]
-    [InlineData(typeof(Day21), RunMode.Real, "3660", "-1")]
+    [InlineData(typeof(Day21), RunMode.Real, "3660", "605492675373144")]
     public async Task Day21_Regression(Type type, RunMode runMode, string expectedPart1, string expectedPart2)
     {
         if (Activator.CreateInstance(type, runMode) is BaseTestableDay instance)
