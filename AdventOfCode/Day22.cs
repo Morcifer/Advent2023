@@ -63,24 +63,26 @@ public class Brick
         return fallenBrick;
     }
 
-    public List<Brick> SupportedBricks(List<Brick> bricks)
+    public List<int> SupportedBricks(Dictionary<int, Brick> bricks)
     {
         var supportedBricks = Squares
             .SelectMany(
                 t => bricks
+                    .Values
                     .Where(b => b.Id != Id)
                     .Where(b => b.Squares.Any(s => s.X == t.X && s.Y == t.Y && s.Z == t.Z + 1)))
+            .Select(b => b.Id)
             .Distinct() // This one's important!
             .ToList();
 
-        //Console.WriteLine($"Brick {Id} supports bricks {string.Join(',', supportedBricks.Select(b => b.Id))}");
+        //Console.WriteLine($"Brick {Id} supports bricks {string.Join(',', supportedBricks)}");
         return supportedBricks;
     }
 }
 
 public sealed class Day22 : BaseTestableDay
 {
-    private readonly List<Brick> _bricks;
+    private readonly Dictionary<int, Brick> _bricks;
 
     private int _maxX = 0;
     private int _maxY = 0;
@@ -93,7 +95,7 @@ public sealed class Day22 : BaseTestableDay
     {
         RunMode = runMode;
 
-        _bricks = File.ReadAllLines(InputFilePath).Select((t, i) => ConvertTextToBrick(i, t)).ToList();
+        _bricks = File.ReadAllLines(InputFilePath).Select((t, i) => ConvertTextToBrick(i, t)).ToDictionary(b => b.Id, b => b);
     }
 
     private Brick ConvertTextToBrick(int id, string text)
@@ -113,26 +115,26 @@ public sealed class Day22 : BaseTestableDay
         return new Brick(id, (start[0], start[1], start[2]), (end[0], end[1], end[2]));
     }
 
-    private List<Brick> LetTheBricksFallWhereTheyMay(List<Brick> bricks)
+    private Dictionary<int, Brick> LetTheBricksFallWhereTheyMay(Dictionary<int, Brick> bricks)
     {
-        var fallenBricks = new List<Brick>();
+        var fallenBricks = new Dictionary<int, Brick>();
         var heightMap = Enumerable.Range(0, _maxX + 1).Select(_ => Enumerable.Range(0, _maxY + 1).Select(_ => 0).ToList()).ToList();
 
-        foreach (var brick in bricks.OrderBy(b => b.LowestZ()))
+        foreach (var brick in bricks.Values.OrderBy(b => b.LowestZ()))
         {
             var fallenBrick = brick.Fall(heightMap);
-            fallenBricks.Add(fallenBrick);
+            fallenBricks[fallenBrick.Id] = fallenBrick;
         }
 
         return fallenBricks;
     }
 
-    private (Dictionary<int, List<Brick>> Supporting, Dictionary<int, List<Brick>> Supported) SupportGroup(List<Brick> bricks)
+    private (Dictionary<int, List<int>> Supporting, Dictionary<int, List<int>> Supported) SupportGroup(Dictionary<int, Brick> bricks)
     {
-        var supporting = bricks.ToDictionary(b => b.Id, _ => new List<Brick>());
-        var supported = bricks.ToDictionary(b => b.Id, _ => new List<Brick>());
+        var supporting = bricks.ToDictionary(kvp => kvp.Key, _ => new List<int>());
+        var supported = bricks.ToDictionary(kvp => kvp.Key, _ => new List<int>());
 
-        foreach (var fallenBrick in bricks)
+        foreach (var (fallenBrickId, fallenBrick) in bricks)
         {
             var supportedBricks = fallenBrick.SupportedBricks(bricks);
 
@@ -140,7 +142,7 @@ public sealed class Day22 : BaseTestableDay
 
             foreach (var supportedBrick in supportedBricks)
             {
-                supported[supportedBrick.Id].Add(fallenBrick);
+                supported[supportedBrick].Add(fallenBrickId);
             }
         }
 
@@ -155,11 +157,11 @@ public sealed class Day22 : BaseTestableDay
         // Find bricks that join up on support
         var freeBrickCount = 0;
 
-        foreach (var fallenBrick in fallenBricks)
+        foreach (var brickId in fallenBricks.Keys)
         {
-            var supportedBricks = supporting[fallenBrick.Id];
+            var supportedBricks = supporting[brickId];
 
-            if (supportedBricks.All(b => supported[b.Id].Count > 1))
+            if (supportedBricks.All(b => supported[b].Count > 1))
             {
                 freeBrickCount++;
             }
@@ -170,7 +172,47 @@ public sealed class Day22 : BaseTestableDay
 
     private Answer CalculatePart2Answer()
     {
-        return -1;
+        var fallenBricks = LetTheBricksFallWhereTheyMay(_bricks);
+        var (supporting, supported) = SupportGroup(fallenBricks);
+
+        var fallenBricksCount = 0;
+
+        foreach (var brick in fallenBricks.Keys)
+        {
+            var supportingCopy = supporting.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToList());
+            var supportedCopy = supported.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToList());
+
+            //Console.WriteLine($"Killing brick {brick}");
+
+            var bricksToFall = new Queue<int>();
+            bricksToFall.Enqueue(brick);
+
+            while (bricksToFall.Count > 0)
+            {
+                var brickToRemove = bricksToFall.Dequeue();
+
+                supportingCopy.Remove(brickToRemove);
+
+                foreach (var kvp in supportedCopy)
+                {
+                    if (kvp.Value.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    kvp.Value.Remove(brickToRemove);
+
+                    if (kvp.Value.Count == 0)
+                    {
+                        //Console.WriteLine($"Brick {kvp.Key} is also going to fall");
+                        bricksToFall.Enqueue(kvp.Key);
+                        fallenBricksCount += 1;
+                    }
+                }
+            }
+        }
+
+        return fallenBricksCount;
     }
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
