@@ -1,10 +1,8 @@
 namespace AdventOfCode;
 
-
 public class Brick
 {
     public readonly int Id;
-
     public readonly List<(int X, int Y, int Z)> Squares;
 
     public Brick(int id, (int X, int Y, int Z) start, (int X, int Y, int Z) end)
@@ -43,6 +41,7 @@ public class Brick
         var stoppingZ = pointsAtLowestZ
             .Select(t => heightMap[t.X][t.Y])
             .Max();
+
         var deltaZ = 1 + stoppingZ - lowestZ;
 
         //Console.WriteLine($"Brick {Id} is going to fall {deltaZ}");
@@ -83,7 +82,6 @@ public class Brick
 public sealed class Day22 : BaseTestableDay
 {
     private readonly Dictionary<int, Brick> _bricks;
-
     private int _maxX = 0;
     private int _maxY = 0;
 
@@ -138,7 +136,7 @@ public sealed class Day22 : BaseTestableDay
         {
             var supportedBricks = fallenBrick.SupportedBricks(bricks);
 
-            supporting[fallenBrick.Id] = supportedBricks;
+            supporting[fallenBrickId] = supportedBricks;
 
             foreach (var supportedBrick in supportedBricks)
             {
@@ -175,6 +173,14 @@ public sealed class Day22 : BaseTestableDay
         var fallenBricks = LetTheBricksFallWhereTheyMay(_bricks);
         var (supporting, supported) = SupportGroup(fallenBricks);
 
+        supporting = supporting
+            .Where(kvp => kvp.Value.Count > 0) // We don't need these for this part
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        supported = supported
+            .Where(kvp => kvp.Value.Count > 0) // We don't need these for this part either
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
         var fallenBricksCount = 0;
 
         foreach (var brick in fallenBricks.Keys)
@@ -193,21 +199,19 @@ public sealed class Day22 : BaseTestableDay
 
                 supportingCopy.Remove(brickToRemove);
 
-                foreach (var kvp in supportedCopy)
+                foreach (var (supportedBrickId, supportingBricks) in supportedCopy.ToList())
                 {
-                    if (kvp.Value.Count == 0)
+                    supportingBricks.Remove(brickToRemove);
+
+                    if (supportingBricks.Count != 0)
                     {
                         continue;
                     }
 
-                    kvp.Value.Remove(brickToRemove);
-
-                    if (kvp.Value.Count == 0)
-                    {
-                        //Console.WriteLine($"Brick {kvp.Key} is also going to fall");
-                        bricksToFall.Enqueue(kvp.Key);
-                        fallenBricksCount += 1;
-                    }
+                    //Console.WriteLine($"Brick {kvp.Key} is also going to fall");
+                    supportedCopy.Remove(supportedBrickId); // Cleanup!
+                    bricksToFall.Enqueue(supportedBrickId);
+                    fallenBricksCount += 1;
                 }
             }
         }
