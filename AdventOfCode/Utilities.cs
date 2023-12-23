@@ -22,6 +22,14 @@ public static class Utilities
         return enumerable.Select((v, i) => (i, v)); // Sure would have been nicer if I could just do this in the foreach directly...
     }
 
+    public static IEnumerable<T> Reversed<T>(this List<T> source)
+    {
+        for (int i = source.Count - 1; i >= 0; i--)
+        {
+            yield return source[i];
+        }
+    }
+
     public static int Product(this IEnumerable<int> source)
     {
         return source.Aggregate(1, (x, y) => x * y);

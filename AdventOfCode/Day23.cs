@@ -1,3 +1,5 @@
+using MathNet.Numerics.Distributions;
+
 namespace AdventOfCode;
 
 public sealed class Day23 : BaseTestableDay
@@ -22,19 +24,27 @@ public sealed class Day23 : BaseTestableDay
 
         var deltas = new List<(int Row, int Column)>() { (0, 1), (0, -1), (1, 0), (-1, 0) };
 
-        var queue = new Queue<List<(int Row, int Column)>>();
-        queue.Enqueue(new List<(int Row, int Column)>() { start });
+        var queue = new PriorityQueue<
+            (List<(int Row, int Column)>, HashSet<(int Row, int Column)>),
+            int
+        >();
+
+        queue.Enqueue(
+            (new List<(int Row, int Column)>() { start }, new HashSet<(int Row, int Column)>()),
+            -1
+        );
 
         var validPaths = new List<List<(int Row, int Column)>>();
 
         while (queue.Count > 0)
         {
             //Console.WriteLine($"{queue.Count} paths left to check.");
-            var path = queue.Dequeue();
+            var (path, set) = queue.Dequeue();
 
             if (path[^1] == end)
             {
                 validPaths.Add(path);
+                Console.WriteLine($"New path found, length is {path.Count} (best is {validPaths.Max(x => x.Count - 1)}), remaining queue size is {queue.Count}");
                 continue;
             }
 
@@ -48,45 +58,55 @@ public sealed class Day23 : BaseTestableDay
             }
 
             // You've eaten your own tail!
-            if (path.Count(x => x == current) > 1)
+            if (set.Contains(current))
             {
                 continue;
             }
+
+            set.Add(current);
 
             switch (currentCharacter)
             {
                 case '>':
                     path.Add((current.Row, current.Column + 1));
-                    queue.Enqueue(path);
+                    queue.Enqueue((path, set), -path.Count);
                     break;
                 case '<':
                     path.Add((current.Row, current.Column - 1));
-                    queue.Enqueue(path);
+                    queue.Enqueue((path, set), -path.Count);
                     break;
                 case 'v':
                     path.Add((current.Row + 1, current.Column));
-                    queue.Enqueue(path);
+                    queue.Enqueue((path, set), -path.Count);
                     break;
                 case '^':
                     path.Add((current.Row - 1, current.Column));
-                    queue.Enqueue(path);
+                    queue.Enqueue((path, set), -path.Count);
                     break;
                 default:
                     if (current == start)
                     {
                         path.Add((current.Row + 1, current.Column));
-                        queue.Enqueue(path);
-                    }
-                    else
-                    {
-                        foreach (var delta in deltas)
-                        {
-                            var newPath = path.ToList();
-                            newPath.Add((current.Row + delta.Row, current.Column + delta.Column));
-                            queue.Enqueue(newPath);
-                        }
+                        queue.Enqueue((path, set), -path.Count);
+                        break;
                     }
 
+                    var possibleNeighbors = deltas.Select(delta => (Row: current.Row + delta.Row, Column: current.Column + delta.Column)).ToList();
+                    var waysToGo = possibleNeighbors.Where(n => map[n.Row][n.Column] != '#').ToList();
+
+                    if (waysToGo.Count == 1)
+                    {
+                        path.Add(waysToGo[0]);
+                        queue.Enqueue((path, set), -path.Count);
+                        break;
+                    }
+
+                    foreach (var wayToGo in waysToGo)
+                    {
+                        var newPath = path.ToList();
+                        newPath.Add(wayToGo);
+                        queue.Enqueue((newPath, set.ToHashSet()), -newPath.Count);
+                    }
 
                     break;
             }
@@ -108,5 +128,5 @@ public sealed class Day23 : BaseTestableDay
 
     public override ValueTask<string> Solve_1() => CalculatePart1Answer();
 
-    public override ValueTask<string> Solve_2() => CalculatePart2Answer();
+    public override ValueTask<string> Solve_2() => CalculatePart2Answer(); // Smaller than 7000, larger than 6000.
 }
